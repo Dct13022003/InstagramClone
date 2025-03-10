@@ -1,0 +1,21 @@
+export const USER_MESSAGES = {
+  VALIDATION_ERROR: 'Validation error',
+  EMAIL_ALREADY_EXISTS: 'Email already exists',
+  EMAIL_IS_REQUIRED: 'Email is required',
+  EMAIL_IS_INVALID: 'Email is invalid',
+  NAME_IS_REQUIRED: 'Name is required',
+  NAME_MUST_BE_STRING: 'Name must be a string',
+  NAME_MUST_BE_BETWEEN_1_AND_20_CHARACTERS: 'Name must be between 1 and 20 characters',
+  PASS_IS_REQUIRED: 'Password is required',
+  PASS_MUST_BE_STRING: 'Password must be a string',
+  PASS_MUST_BE_BETWEEN_6_AND_20_CHARACTERS: 'Password must be between 6 and 20 characters',
+  PASS_MUST_BE_STRONG: 'Password must be strong',
+  PASS_IS_INCORRECT: 'Password is incorrect',
+  CONFIRM_PASS_IS_REQUIRED: 'Confirm password is required',
+  CONFIRM_PASS_MUST_BE_STRING: 'Confirm password must be a string',
+  USER_NOT_FOUND: 'User not found',
+  ACCESSTOKEN_IS_REQUIRED: 'Access token is required',
+  REFRESH_TOKEN_IS_REQUIRED: 'Refresh token is required',
+  REFRESH_TOKEN_IN_VALID: 'Refresh in valid',
+  REFRESH_TOKEN_NOT_FOUND: 'Refresh token not found'
+} as const
