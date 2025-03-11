@@ -27,5 +27,13 @@ userRouter.post('/register', registerValidator, wrapAsync(registerController))
  * Body: {refresh_token: string}
  */
 userRouter.post('/logout', AccessTokenValidator, RefreshTokenValidator, wrapAsync(logoutController))
+/**
+ * Description. Verify-email route
+ * Route: /logout
+ * Method: POST
+ * Headers: {Authorization: Bearer <access_token>}
+ * Body: {refresh_token: string}
+ */
+userRouter.post('/verify-email', wrapAsync(logoutController))
 
 export default userRouter

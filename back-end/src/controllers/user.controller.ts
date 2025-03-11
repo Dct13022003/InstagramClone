@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import { IUser, User } from '~/models/user.models'
+import { User, IUser } from '~/models/user.models'
 import userService from '~/services/user.services'
 
 export const registerController = async (req: Request, res: Response, next: NextFunction) => {
@@ -10,16 +10,17 @@ export const registerController = async (req: Request, res: Response, next: Next
     success: true
   })
 }
-export const loginController = async ({ req, res }: { req: Request; res: Response }) => {
+export const loginController = async (req: Request, res: Response) => {
   const user = req.user as IUser
   const user_id = user._id
-  await userService.login(user_id.toString())
+  const result = await userService.login(user_id.toString())
   res.status(200).json({
     message: 'Login successfully',
-    success: true
+    success: true,
+    result
   })
 }
-export const logoutController = async ({ req, res }: { req: Request; res: Response }) => {
+export const logoutController = async (req: Request, res: Response) => {
   const { refresh_token } = req.body
   await userService.logout(refresh_token)
   return res.status(200).json({ message: 'Logout successfully', success: true })

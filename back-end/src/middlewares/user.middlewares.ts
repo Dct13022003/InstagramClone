@@ -1,6 +1,6 @@
 import { checkSchema } from 'express-validator'
 import { USER_MESSAGES } from '~/constants/message'
-import { User } from '~/models/user.models'
+import { IUser, User } from '~/models/user.models'
 import bcrypt from 'bcrypt'
 import userService from '~/services/user.services'
 import validate from '~/utils/validation'
@@ -23,7 +23,7 @@ export const loginValidator = validate(
         trim: true,
         custom: {
           options: async (value, { req }) => {
-            const user = await User.findOne({ email: value })
+            const user: IUser | null = await User.findOne({ email: value })
             if (user === null) throw new Error(USER_MESSAGES.USER_NOT_FOUND)
             else {
               const isMatch = await bcrypt.compare(req.body.password, user.password)
@@ -52,7 +52,9 @@ export const loginValidator = validate(
           options: {
             minLength: 6,
             minLowercase: 1,
-            minNumbers: 1
+            minNumbers: 1,
+            minUppercase: 1,
+            minSymbols: 0
           },
           errorMessage: USER_MESSAGES.PASS_MUST_BE_STRONG
         }
@@ -163,13 +165,10 @@ export const registerValidator = validate(
 export const AccessTokenValidator = validate(
   checkSchema(
     {
-      notEmpty: {
-        errorMessage: USER_MESSAGES.ACCESSTOKEN_IS_REQUIRED
-      },
       Authorization: {
         custom: {
           options: async (value: string, { req }) => {
-            const access_token = value.split(' ')[1]
+            const access_token = (value || '').split(' ')[1]
             if (!access_token)
               throw new ErrorWithStatus({
                 status: httpStatus.UNAUTHORIZED,
@@ -189,11 +188,15 @@ export const AccessTokenValidator = validate(
 export const RefreshTokenValidator = validate(
   checkSchema({
     refresh_token: {
-      notEmpty: {
-        errorMessage: USER_MESSAGES.REFRESH_TOKEN_IS_REQUIRED
-      },
+      trim: true,
       custom: {
         options: async (value, { req }) => {
+          if (!value) {
+            throw new ErrorWithStatus({
+              status: httpStatus.UNAUTHORIZED,
+              message: USER_MESSAGES.REFRESH_TOKEN_IS_REQUIRED
+            })
+          }
           try {
             const [decode_refresh_token, refreshToken] = await Promise.all([
               verifyToken({ token: value }),
