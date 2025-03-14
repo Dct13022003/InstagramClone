@@ -9,6 +9,8 @@ export interface IUser extends Document {
   profilePicture?: string
   bio?: string
   gender?: 'male' | 'female'
+  email_verify_token: string
+  forgot_password_token: string
   verify?: 'Unverified' | 'Verified' | 'Banned'
   followers: IUser[]
   following: IUser[]
@@ -26,7 +28,9 @@ const userSchema = new Schema<IUser>(
     profilePicture: { type: String, default: '' },
     bio: { type: String, default: '' },
     gender: { type: String, enum: ['male', 'female'] },
-    verify: { type: String, enum: ['Unverified', 'Verified', 'Banned'] },
+    email_verify_token: { type: String, default: '' },
+    forgot_password_token: { type: String, default: '' },
+    verify: { type: String, enum: ['Unverified', 'Verified', 'Banned'], default: 'Unverified' },
     followers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     following: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     posts: [{ type: Schema.Types.ObjectId, ref: 'Post' }],

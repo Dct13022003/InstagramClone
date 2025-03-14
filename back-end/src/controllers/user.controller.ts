@@ -1,4 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
+import { httpStatus } from '~/constants/httpStatus'
+import { USER_MESSAGES } from '~/constants/message'
+import { TokenPayload } from '~/models/request/user.request'
 import { User, IUser } from '~/models/user.models'
 import userService from '~/services/user.services'
 
@@ -37,4 +40,48 @@ export const getProfile = async ({ req, res }: { req: Request; res: Response }) 
   } catch (error) {
     console.log(error)
   }
+}
+
+export const emailVerifyController = async (req: Request, res: Response) => {
+  const user_id = req.decode_email_verify_token?.user_id as string
+  const user = await User.findById(user_id)
+  if (!user) {
+    return res.status(httpStatus.NOT_FOUND).json({ message: USER_MESSAGES.USER_NOT_FOUND, success: false })
+  }
+  if (user?.email_verify_token === '') {
+    return res.json({ message: USER_MESSAGES.EMAIL_IS_VERIFY_BEFORE, success: true })
+  }
+  await userService.emailVerify(user_id)
+  return res.status(httpStatus.OK).json({ message: USER_MESSAGES.EMAIL_VERIFY_SUCCESS, success: true })
+}
+export const resendEmailVerifyController = async (req: Request, res: Response) => {
+  const { user_id } = req.decode_authorization as TokenPayload
+  const user = await User.findById(user_id)
+  if (!user) {
+    return res.status(httpStatus.NOT_FOUND).json({
+      message: USER_MESSAGES.USER_NOT_FOUND
+    })
+  }
+  if (user.email_verify_token === '') {
+    return res.json({
+      message: USER_MESSAGES.EMAIL_IS_VERIFY_BEFORE
+    })
+  }
+  await userService.resendEmailVerify(user_id)
+  return res.status(httpStatus.OK).json({
+    message: USER_MESSAGES.RESEND_VERIFY_EMAIL_SUCCESS
+  })
+}
+export const forgotPasswordController = async (req: Request, res: Response) => {
+  const user = req.user as IUser
+  const user_id = user._id
+  await userService.forgotPassword(user_id.toString())
+  return res.json({
+    message: USER_MESSAGES.CHECK_EMAIL_TO_RESET_PASSWORD
+  })
+}
+export const forgotPasswordVerifyController = async (req: Request, res: Response) => {
+  return res.json({
+    message: USER_MESSAGES.VERIFY_PASSWORD_SUCCESS
+  })
 }
