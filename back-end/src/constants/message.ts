@@ -26,5 +26,15 @@ export const USER_MESSAGES = {
   FORGOT_PASSWORD_TOKEN_IS_REQUIRED: 'Forgot password is required',
   VERIFY_PASSWORD_SUCCESS: 'Verify password success',
   INVALID_FORGOT_PASSWORD: 'Invalid forgot password',
-  FORGOT_PASSWORD_TOKEN_IS_VALID: 'Forgot password token is valid'
+  FORGOT_PASSWORD_TOKEN_IS_VALID: 'Forgot password token is valid',
+  RESET_PASSWORD_SUCCESS: 'Reset password success',
+  USER_NOT_VERIFY: 'User not verify',
+  BIO_MUST_BE_BETWEEN_1_AND_150_CHARACTERS: 'Bio must be between 1 and 150 characters',
+  BIO_MUST_BE_STRING: 'Bio must be string',
+  PROFILEPICTURE_MUST_BE_STRING: 'Profile picture must be string',
+  GENDER_MUST_BE_STRING: 'Gender must be string',
+  UPDATE_PROFILE_SUCCESS: 'Update profile success',
+  FOLLOW_SUCCESS: 'Follow success',
+  FOLLOWED: 'User has already been followed',
+  INVALID_USER_ID: 'User id invalid'
 } as const

@@ -3,21 +3,30 @@ import {
   emailVerifyController,
   forgotPasswordController,
   forgotPasswordVerifyController,
+  getProfileController,
   loginController,
   registerController,
-  resendEmailVerifyController
+  resendEmailVerifyController,
+  resetPasswordController,
+  updateProfileController
 } from '~/controllers/user.controller'
 import {
-  EmailVerifyTokenValidator,
+  emailVerifyTokenValidator,
   forgotPasswordTokenValidator,
   forgotPasswordValidator,
   loginValidator,
-  RefreshTokenValidator,
-  registerValidator
+  refreshTokenValidator,
+  registerValidator,
+  resetPasswordValidator,
+  accessTokenValidator,
+  verifyUserValidator,
+  verifyUpdateUserValidator,
+  followValidator
 } from '~/middlewares/user.middlewares'
 import { logoutController } from '~/controllers/user.controller'
-import { AccessTokenValidator } from '~/middlewares/user.middlewares'
 import { wrapAsync } from '~/utils/handler'
+import { filterMiddleware } from '~/middlewares/common.middlewares'
+import { UpdateProfile } from '~/models/request/user.request'
 const userRouter = Router()
 /**
  * Description. Login route
@@ -40,14 +49,14 @@ userRouter.post('/register', registerValidator, wrapAsync(registerController))
  * Headers: {Authorization: Bearer <access_token>}
  * Body: {refresh_token: string}
  */
-userRouter.post('/logout', AccessTokenValidator, RefreshTokenValidator, wrapAsync(logoutController))
+userRouter.post('/logout', accessTokenValidator, refreshTokenValidator, wrapAsync(logoutController))
 /**
  * Description. Verify-email route
  * Route: /verify-email
  * Method: POST
  * Body: {email_verify_token: string}
  */
-userRouter.post('/verify-email', EmailVerifyTokenValidator, wrapAsync(emailVerifyController))
+userRouter.post('/verify-email', emailVerifyTokenValidator, wrapAsync(emailVerifyController))
 
 /**
  * Description. Resend verify email when user click on the link
@@ -56,7 +65,7 @@ userRouter.post('/verify-email', EmailVerifyTokenValidator, wrapAsync(emailVerif
  * Headers: {Authorization: Bearer <access_token>}
  * Body: {}
  */
-userRouter.post('/resend-verify-email', AccessTokenValidator, wrapAsync(resendEmailVerifyController))
+userRouter.post('/resend-verify-email', accessTokenValidator, wrapAsync(resendEmailVerifyController))
 /**
  * Description.  verify email when user click on the link
  * Route: /forgot-password
@@ -71,4 +80,51 @@ userRouter.post('/forgot-password', forgotPasswordValidator, wrapAsync(forgotPas
  * Body: {forgot_password_token: string}
  */
 userRouter.post('/verify-forgot-password', forgotPasswordTokenValidator, wrapAsync(forgotPasswordVerifyController))
+/**
+ * Description. reset password
+ * Route: /reset-password
+ * Method: POST
+ * Body: {forgot_password_token: string, password:string, confirm_password:string}
+ */
+userRouter.post('/reset-password', resetPasswordValidator, wrapAsync(resetPasswordController))
+
+/**
+ * Description. get profile
+ * Route: /get-profile
+ * Method: GET
+ * Headers: {Authorization: Bearer <access_token>}
+ */
+userRouter.get('/get-profile', accessTokenValidator, wrapAsync(getProfileController))
+
+/**
+ * Description. update profile
+ * Route: /update-profile
+ * Method: Patch
+ * Headers: {Authorization: Bearer <access_token>}
+ * Body: {bio:string,gender:string,profilePicture:string}
+ */
+userRouter.patch(
+  '/update-profile',
+  accessTokenValidator,
+  filterMiddleware<UpdateProfile>(['bio', 'gender', 'profilePicture']),
+  verifyUserValidator,
+  verifyUpdateUserValidator,
+  wrapAsync(updateProfileController)
+)
+
+/**
+ * Description. follow someone
+ * Route: /follow
+ * Method: POST
+ * Headers: {Authorization: Bearer <access_token>}
+ * Body: {user_id_follow}
+ */
+userRouter.post(
+  '/follow',
+  accessTokenValidator,
+  verifyUserValidator,
+  followValidator,
+  wrapAsync(updateProfileController)
+)
+
 export default userRouter

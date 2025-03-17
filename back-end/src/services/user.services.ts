@@ -5,13 +5,15 @@ import { RefreshToken } from '~/models/refreshToken.model'
 import { signToken } from '~/utils/jwt'
 import dotenv from 'dotenv'
 import { ObjectId } from 'mongodb'
+import { Follow } from '~/models/follow.model'
 dotenv.config()
 class UserService {
-  private signAccessToken(user_id: string) {
+  private signAccessToken({ user_id, verify }: { user_id: string; verify: string }) {
     return signToken({
       payload: {
         user_id,
-        token_type: tokenType.AccessToken
+        token_type: tokenType.AccessToken,
+        verify
       },
       options: {
         expiresIn: '30m'
@@ -53,8 +55,8 @@ class UserService {
       }
     })
   }
-  signAccessAndRefreshToken(user_id: string) {
-    return Promise.all([this.signAccessToken(user_id), this.signRefreshToken(user_id)])
+  signAccessAndRefreshToken(user_id: string, verify: string) {
+    return Promise.all([this.signAccessToken({ user_id, verify }), this.signRefreshToken(user_id)])
   }
   async register(payload: { email: string; password: string; username: string }) {
     const { email, password, username } = payload
@@ -69,12 +71,12 @@ class UserService {
       password: hash_password
     })
     console.log(emailVerifyToken)
-    const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id.toString())
+    const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id.toString(), 'Unverified')
     await RefreshToken.create({ user_id, token: refresh_token })
     return { access_token, refresh_token }
   }
-  async login(user_id: string) {
-    const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id)
+  async login(user_id: string, verify: string) {
+    const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id, verify)
     await RefreshToken.create({ user_id, token: refresh_token })
     return { access_token, refresh_token }
   }
@@ -91,11 +93,14 @@ class UserService {
     })
   }
   async emailVerify(user_id: string) {
-    await User.findByIdAndUpdate(
-      user_id,
-      { email_verify_token: '', verify: 'Verified' },
-      { new: true, runValidators: true }
-    )
+    await Promise.all([
+      this.signAccessAndRefreshToken(user_id, 'Verified'),
+      User.findByIdAndUpdate(
+        user_id,
+        { email_verify_token: '', verify: 'Verified' },
+        { new: true, runValidators: true }
+      )
+    ])
   }
   async resendEmailVerify(user_id: string) {
     const email_verify_token = await this.signEmailVerifyToken(user_id)
@@ -115,6 +120,53 @@ class UserService {
       { new: true, runValidators: true }
     )
     console.log(forgot_password_token)
+  }
+
+  async resetPassword(user_id: string, password: string) {
+    const hash_password = await bcrypt.hash(password, 10)
+    await User.findByIdAndUpdate(
+      user_id,
+      {
+        password: hash_password
+      },
+      { new: true, runValidators: true }
+    )
+  }
+
+  async getProfile(user_id: string) {
+    const user = await User.findById(user_id, {
+      password: 0,
+      email_verify_token: 0,
+      forgot_password_token: 0
+    })
+    return user
+  }
+
+  async updateProfile(user_id: string, payload: any) {
+    const user = await User.findByIdAndUpdate(
+      user_id,
+      {
+        ...payload
+      },
+      {
+        new: true,
+        projection: {
+          username: 1,
+          email: 1,
+          profilePicture: 1,
+          bio: 1,
+          gender: 1
+        }
+      }
+    )
+    return user
+  }
+
+  async follow(user_id: string, user_id_follow: string) {
+    await Follow.create({
+      follower: user_id,
+      following: user_id_follow
+    })
   }
 }
 const userService = new UserService()

@@ -9,7 +9,10 @@ import { ErrorWithStatus } from '~/models/error/error'
 import { httpStatus } from '~/constants/httpStatus'
 import { RefreshToken } from '~/models/refreshToken.model'
 import { JsonWebTokenError } from 'jsonwebtoken'
-import { Request } from 'express'
+import { Request, Response, NextFunction } from 'express'
+import { TokenPayload } from '~/models/request/user.request'
+import { Follow } from '~/models/follow.model'
+import { isValidObjectId } from 'mongoose'
 
 export const loginValidator = validate(
   checkSchema(
@@ -150,20 +153,12 @@ export const registerValidator = validate(
           errorMessage: USER_MESSAGES.PASS_MUST_BE_STRONG
         }
       }
-      // date_of_birth: {
-      //   isISO8601: {
-      //     options: {
-      //       strict: true,
-      //       strictSeparator: true
-      //     }
-      //   }
-      // }
     },
     ['body']
   )
 )
 
-export const AccessTokenValidator = validate(
+export const accessTokenValidator = validate(
   checkSchema(
     {
       Authorization: {
@@ -186,7 +181,7 @@ export const AccessTokenValidator = validate(
   )
 )
 
-export const RefreshTokenValidator = validate(
+export const refreshTokenValidator = validate(
   checkSchema({
     refresh_token: {
       trim: true,
@@ -224,7 +219,7 @@ export const RefreshTokenValidator = validate(
     }
   })
 )
-export const EmailVerifyTokenValidator = validate(
+export const emailVerifyTokenValidator = validate(
   checkSchema({
     email_verify_token: {
       trim: true,
@@ -314,6 +309,177 @@ export const forgotPasswordTokenValidator = validate(
             } else throw error
           }
           return true
+        }
+      }
+    }
+  })
+)
+
+export const resetPasswordValidator = validate(
+  checkSchema({
+    password: {
+      notEmpty: {
+        errorMessage: USER_MESSAGES.PASS_IS_REQUIRED
+      },
+      isString: {
+        errorMessage: USER_MESSAGES.PASS_MUST_BE_STRING
+      },
+      isLength: {
+        options: {
+          min: 6,
+          max: 20
+        },
+        errorMessage: USER_MESSAGES.PASS_MUST_BE_BETWEEN_6_AND_20_CHARACTERS
+      },
+      isStrongPassword: {
+        options: {
+          minLength: 6,
+          minLowercase: 1,
+          minNumbers: 1,
+          minUppercase: 1,
+          minSymbols: 0
+        },
+        errorMessage: USER_MESSAGES.PASS_MUST_BE_STRONG
+      }
+    },
+    confirm_password: {
+      notEmpty: {
+        errorMessage: USER_MESSAGES.CONFIRM_PASS_IS_REQUIRED
+      },
+      isString: {
+        errorMessage: USER_MESSAGES.CONFIRM_PASS_MUST_BE_STRING
+      },
+      isLength: {
+        options: {
+          min: 6,
+          max: 20
+        },
+        errorMessage: USER_MESSAGES.PASS_MUST_BE_BETWEEN_6_AND_20_CHARACTERS
+      },
+      isStrongPassword: {
+        options: {
+          minLength: 6,
+          minLowercase: 1,
+          minNumbers: 1,
+          minUppercase: 1,
+          minSymbols: 0
+        },
+        errorMessage: USER_MESSAGES.PASS_MUST_BE_STRONG
+      }
+    },
+    forgot_password_token: {
+      trim: true,
+      custom: {
+        options: async (value, { req }) => {
+          if (!value) {
+            throw new ErrorWithStatus({
+              status: httpStatus.UNAUTHORIZED,
+              message: USER_MESSAGES.FORGOT_PASSWORD_TOKEN_IS_REQUIRED
+            })
+          }
+          try {
+            const decode_forgot_password_token = await verifyToken({
+              token: value,
+              SECRET_KEY: process.env.SECRET_KEY_FORGOT_PASSWORD as string
+            })
+            ;(req as Request).decode_forgot_password_token = decode_forgot_password_token
+            const { user_id } = decode_forgot_password_token
+            const user = await User.findById(user_id)
+            if (user === null) {
+              throw new ErrorWithStatus({
+                message: USER_MESSAGES.USER_NOT_FOUND,
+                status: httpStatus.UNAUTHORIZED
+              })
+            }
+            if (user.forgot_password_token != value) {
+              throw new ErrorWithStatus({
+                message: USER_MESSAGES.INVALID_FORGOT_PASSWORD,
+                status: httpStatus.UNAUTHORIZED
+              })
+            }
+          } catch (error) {
+            if (error instanceof JsonWebTokenError) {
+              throw new ErrorWithStatus({
+                status: httpStatus.UNAUTHORIZED,
+                message: USER_MESSAGES.FORGOT_PASSWORD_TOKEN_IS_VALID
+              })
+            } else throw error
+          }
+          return true
+        }
+      }
+    }
+  })
+)
+
+export const verifyUserValidator = (req: Request, res: Response, next: NextFunction) => {
+  const { verify } = req.decode_authorization as TokenPayload
+  if (verify != 'Verified') {
+    return next(new ErrorWithStatus({ message: USER_MESSAGES.USER_NOT_VERIFY, status: httpStatus.FORBIDDEN }))
+  }
+  next()
+}
+
+export const verifyUpdateUserValidator = validate(
+  checkSchema(
+    {
+      bio: {
+        isLength: {
+          options: {
+            min: 1,
+            max: 150
+          },
+          errorMessage: USER_MESSAGES.BIO_MUST_BE_BETWEEN_1_AND_150_CHARACTERS
+        },
+        isString: {
+          errorMessage: USER_MESSAGES.BIO_MUST_BE_STRING
+        },
+        trim: true,
+        optional: true
+      },
+      profilePicture: {
+        isString: {
+          errorMessage: USER_MESSAGES.PROFILEPICTURE_MUST_BE_STRING
+        },
+        trim: true,
+        optional: true
+      },
+      gender: {
+        isString: {
+          errorMessage: USER_MESSAGES.GENDER_MUST_BE_STRING
+        },
+        trim: true,
+        optional: true
+      }
+    },
+    ['body']
+  )
+)
+export const followValidator = validate(
+  checkSchema({
+    user_id_follow: {
+      custom: {
+        options: async (value) => {
+          if (isValidObjectId(value)) {
+            throw new ErrorWithStatus({
+              message: USER_MESSAGES.INVALID_USER_ID,
+              status: httpStatus.NOT_FOUND
+            })
+          }
+          const followed_user = await User.findById({ _id: value })
+          if (followed_user === null) {
+            throw new ErrorWithStatus({
+              message: USER_MESSAGES.USER_NOT_FOUND,
+              status: httpStatus.NOT_FOUND
+            })
+          }
+          const user = Follow.findOne({ following: value })
+          if (user != null) {
+            throw new ErrorWithStatus({
+              message: USER_MESSAGES.FOLLOWED,
+              status: httpStatus.CONFLICT
+            })
+          }
         }
       }
     }
