@@ -1,6 +1,8 @@
 import { Router } from 'express'
 import {
+  changePasswordController,
   emailVerifyController,
+  followController,
   forgotPasswordController,
   forgotPasswordVerifyController,
   getProfileController,
@@ -8,6 +10,7 @@ import {
   registerController,
   resendEmailVerifyController,
   resetPasswordController,
+  unFollowController,
   updateProfileController
 } from '~/controllers/user.controller'
 import {
@@ -21,7 +24,9 @@ import {
   accessTokenValidator,
   verifyUserValidator,
   verifyUpdateUserValidator,
-  followValidator
+  followValidator,
+  unFollowValidator,
+  changePasswordValidator
 } from '~/middlewares/user.middlewares'
 import { logoutController } from '~/controllers/user.controller'
 import { wrapAsync } from '~/utils/handler'
@@ -119,12 +124,33 @@ userRouter.patch(
  * Headers: {Authorization: Bearer <access_token>}
  * Body: {user_id_follow}
  */
-userRouter.post(
-  '/follow',
+userRouter.post('/follow', accessTokenValidator, verifyUserValidator, followValidator, wrapAsync(followController))
+
+/**
+ * Description. unfollow someone
+ * Route: /follow/:user_id
+ * Method: DELETE
+ * Headers: {Authorization: Bearer <access_token>}
+ */
+userRouter.delete(
+  '/follow/:user_id_unfollow',
   accessTokenValidator,
   verifyUserValidator,
-  followValidator,
-  wrapAsync(updateProfileController)
+  unFollowValidator,
+  wrapAsync(unFollowController)
 )
 
+/**
+ * Description. Change password
+ * Route: /change-password
+ * Method: PUT
+ * Headers: {Authorization: Bearer <access_token>}
+ */
+userRouter.put(
+  '/change-password',
+  accessTokenValidator,
+  verifyUserValidator,
+  changePasswordValidator,
+  wrapAsync(changePasswordController)
+)
 export default userRouter

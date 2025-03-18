@@ -98,9 +98,23 @@ export const updateProfileController = async (req: Request, res: Response) => {
 
 export const followController = async (req: Request, res: Response) => {
   const { user_id } = req.decode_authorization as TokenPayload
-  const user_follower_id = req.body
-  await userService.follow(user_id, user_follower_id)
+  const { user_id_follow } = req.body
+  const result = await userService.follow(user_id, user_id_follow)
+  return res.json({ result })
+}
+
+export const unFollowController = async (req: Request, res: Response) => {
+  const { user_id } = req.decode_authorization as TokenPayload
+  const { user_id_unfollow } = req.params
+  const result = await userService.unFollow(user_id, user_id_unfollow)
+  return res.json({ result })
+}
+export const changePasswordController = async (req: Request, res: Response) => {
+  const { password } = req.body
+  const { user_id } = req.decode_authorization as TokenPayload
+  const result = await userService.changePassword(password, user_id)
   return res.json({
-    message: USER_MESSAGES.FOLLOW_SUCCESS
+    message: USER_MESSAGES.CHANGE_PASSWORD_SUCCESS,
+    result
   })
 }

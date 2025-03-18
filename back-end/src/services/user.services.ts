@@ -6,6 +6,8 @@ import { signToken } from '~/utils/jwt'
 import dotenv from 'dotenv'
 import { ObjectId } from 'mongodb'
 import { Follow } from '~/models/follow.model'
+import { USER_MESSAGES } from '~/constants/message'
+import { message } from '~/models/message.models'
 dotenv.config()
 class UserService {
   private signAccessToken({ user_id, verify }: { user_id: string; verify: string }) {
@@ -163,10 +165,30 @@ class UserService {
   }
 
   async follow(user_id: string, user_id_follow: string) {
-    await Follow.create({
-      follower: user_id,
-      following: user_id_follow
-    })
+    const user = await Follow.findOne({ follower: new ObjectId(user_id), following: new ObjectId(user_id_follow) })
+    if (user === null) {
+      await Follow.create({
+        follower: new ObjectId(user_id),
+        following: new ObjectId(user_id_follow)
+      })
+      return { message: USER_MESSAGES.FOLLOW_SUCCESS }
+    }
+    return { message: USER_MESSAGES.FOLLOWED }
+  }
+  async unFollow(user_id: string, user_id_unfollow: string) {
+    const user = await Follow.findOne({ follower: new ObjectId(user_id), following: new ObjectId(user_id_unfollow) })
+    if (user !== null) {
+      await Follow.deleteOne({
+        follower: new ObjectId(user_id),
+        following: new ObjectId(user_id_unfollow)
+      })
+      return { message: USER_MESSAGES.UNFOLLOW_SUCCESS }
+    }
+    return { message: USER_MESSAGES.UNFOLLOW_FAIL }
+  }
+  async changePassword(password: string, user_id: string) {
+    const hash_password = await bcrypt.hash(password, 10)
+    await User.findByIdAndUpdate(user_id, { password: hash_password }, { new: true, runValidators: true })
   }
 }
 const userService = new UserService()

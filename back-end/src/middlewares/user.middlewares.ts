@@ -11,8 +11,8 @@ import { RefreshToken } from '~/models/refreshToken.model'
 import { JsonWebTokenError } from 'jsonwebtoken'
 import { Request, Response, NextFunction } from 'express'
 import { TokenPayload } from '~/models/request/user.request'
-import { Follow } from '~/models/follow.model'
 import { isValidObjectId } from 'mongoose'
+import { chain } from 'lodash'
 
 export const loginValidator = validate(
   checkSchema(
@@ -151,6 +151,15 @@ export const registerValidator = validate(
             minSymbols: 0
           },
           errorMessage: USER_MESSAGES.PASS_MUST_BE_STRONG
+        },
+        custom: {
+          options: async (value, { req }) => {
+            const { password } = req.body
+            if (value !== password) {
+              throw new Error(USER_MESSAGES.CONFIRM_PASSWORD_MUST_BE_SAME_PASSWORD)
+            }
+            return true
+          }
         }
       }
     },
@@ -456,30 +465,136 @@ export const verifyUpdateUserValidator = validate(
   )
 )
 export const followValidator = validate(
-  checkSchema({
-    user_id_follow: {
-      custom: {
-        options: async (value) => {
-          if (isValidObjectId(value)) {
-            throw new ErrorWithStatus({
-              message: USER_MESSAGES.INVALID_USER_ID,
-              status: httpStatus.NOT_FOUND
-            })
+  checkSchema(
+    {
+      user_id_follow: {
+        custom: {
+          options: async (value) => {
+            if (!isValidObjectId(value)) {
+              throw new ErrorWithStatus({
+                message: USER_MESSAGES.INVALID_USER_ID,
+                status: httpStatus.NOT_FOUND
+              })
+            }
+            const follower = await User.findById({ _id: value })
+            if (follower === null) {
+              throw new ErrorWithStatus({
+                message: USER_MESSAGES.USER_NOT_FOUND,
+                status: httpStatus.NOT_FOUND
+              })
+            }
           }
-          const followed_user = await User.findById({ _id: value })
-          if (followed_user === null) {
+        }
+      }
+    },
+    ['body']
+  )
+)
+export const unFollowValidator = validate(
+  checkSchema(
+    {
+      user_id_unfollow: {
+        custom: {
+          options: async (value) => {
+            if (!isValidObjectId(value)) {
+              throw new ErrorWithStatus({
+                message: USER_MESSAGES.INVALID_USER_ID,
+                status: httpStatus.NOT_FOUND
+              })
+            }
+            const followed_user = await User.findById({ _id: value })
+            if (followed_user === null) {
+              throw new ErrorWithStatus({
+                message: USER_MESSAGES.USER_NOT_FOUND,
+                status: httpStatus.NOT_FOUND
+              })
+            }
+          }
+        }
+      }
+    },
+    ['params']
+  )
+)
+export const changePasswordValidator = validate(
+  checkSchema({
+    old_password: {
+      custom: {
+        options: async (value, { req }) => {
+          const { user_id } = (req as Request).decode_authorization as TokenPayload
+          const user = await User.findById(user_id)
+          if (user === null) {
             throw new ErrorWithStatus({
               message: USER_MESSAGES.USER_NOT_FOUND,
               status: httpStatus.NOT_FOUND
             })
           }
-          const user = Follow.findOne({ following: value })
-          if (user != null) {
+          const match = await bcrypt.compare(value, user.password)
+          if (!match) {
             throw new ErrorWithStatus({
-              message: USER_MESSAGES.FOLLOWED,
-              status: httpStatus.CONFLICT
+              message: USER_MESSAGES.OLD_PASSWORD_NOT_MATCH,
+              status: httpStatus.UNAUTHORIZED
             })
           }
+        }
+      }
+    },
+    password: {
+      notEmpty: {
+        errorMessage: USER_MESSAGES.PASS_IS_REQUIRED
+      },
+      isString: {
+        errorMessage: USER_MESSAGES.PASS_MUST_BE_STRING
+      },
+      isLength: {
+        options: {
+          min: 6,
+          max: 20
+        },
+        errorMessage: USER_MESSAGES.PASS_MUST_BE_BETWEEN_6_AND_20_CHARACTERS
+      },
+      isStrongPassword: {
+        options: {
+          minLength: 6,
+          minLowercase: 1,
+          minNumbers: 1,
+          minUppercase: 1,
+          minSymbols: 0
+        },
+        errorMessage: USER_MESSAGES.PASS_MUST_BE_STRONG
+      }
+    },
+    confirm_password: {
+      notEmpty: {
+        errorMessage: USER_MESSAGES.CONFIRM_PASS_IS_REQUIRED
+      },
+      isString: {
+        errorMessage: USER_MESSAGES.CONFIRM_PASS_MUST_BE_STRING
+      },
+      isLength: {
+        options: {
+          min: 6,
+          max: 20
+        },
+        errorMessage: USER_MESSAGES.PASS_MUST_BE_BETWEEN_6_AND_20_CHARACTERS
+      },
+      isStrongPassword: {
+        options: {
+          minLength: 6,
+          minLowercase: 1,
+          minNumbers: 1,
+          minUppercase: 1,
+          minSymbols: 0
+        },
+        errorMessage: USER_MESSAGES.PASS_MUST_BE_STRONG
+      },
+      custom: {
+        options: async (value, { req }) => {
+          const { password } = req.body
+          if (value !== password) {
+            throw new Error(USER_MESSAGES.CONFIRM_PASSWORD_MUST_BE_SAME_PASSWORD)
+          }
+          return true
         }
       }
     }
