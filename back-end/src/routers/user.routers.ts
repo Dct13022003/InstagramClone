@@ -7,6 +7,7 @@ import {
   forgotPasswordVerifyController,
   getProfileController,
   loginController,
+  refreshTokenController,
   registerController,
   resendEmailVerifyController,
   resetPasswordController,
@@ -55,6 +56,15 @@ userRouter.post('/register', registerValidator, wrapAsync(registerController))
  * Body: {refresh_token: string}
  */
 userRouter.post('/logout', accessTokenValidator, refreshTokenValidator, wrapAsync(logoutController))
+
+/**
+ * Description. refresh token
+ * Route: /refreshToken
+ * Method: POST
+ * Headers: {Authorization: Bearer <access_token>}
+ * Body: {refresh_token: string}
+ */
+userRouter.post('/refreshToken', refreshTokenValidator, wrapAsync(refreshTokenController))
 /**
  * Description. Verify-email route
  * Route: /verify-email

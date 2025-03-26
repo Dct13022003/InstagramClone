@@ -43,3 +43,23 @@ export const USER_MESSAGES = {
   OLD_PASSWORD_NOT_MATCH: 'Old password not match',
   CHANGE_PASSWORD_SUCCESS: 'Change password success'
 } as const
+
+export const POST_MESSAGES = {
+  CAPTIONS_MUST_BE_STRING: 'Captions must be string',
+  CAPTION_MUST_BE_BETWEEN_0_AND_2000_CHARACTERS: 'Password must be between 0 and 2000 characters',
+  HASHTAGS_MUST_BE_STRING: 'Hashtag must be an array of user id',
+  MENTIONS_MUST_BE_AN_ARRAY_OF_USER_ID: 'Mentions must be an array of user id',
+  INVALID_POST_ID: 'Invalid post id',
+  GET_POST_SUCCESS: 'Get post detail success',
+  POST_SUCCESS: 'Post success'
+} as const
+
+export const BOOKMARK_MESSAGES = {
+  BOOKMARK_SUCCESS: 'Bookmark success',
+  UNBOOKMARK_SUCCESS: 'Unbookmark success'
+} as const
+
+export const LIKE_MESSAGES = {
+  LIKE_SUCCESS: 'Like success',
+  UNLIKE_SUCCESS: 'Unlike success'
+} as const

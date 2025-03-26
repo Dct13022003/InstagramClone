@@ -1,0 +1,58 @@
+[
+  {
+    '$match': {
+      '_id': new ObjectId('67cdc545ab8455cbf21f6e3b')
+    }
+  }, {
+    '$lookup': {
+      'from': 'hashtags', 
+      'localField': 'hashtags', 
+      'foreignField': '_id', 
+      'as': 'hashtags'
+    }
+  }, {
+    '$lookup': {
+      'from': 'users', 
+      'localField': 'mentions', 
+      'foreignField': '_id', 
+      'as': 'mentions'
+    }
+  }, {
+    '$addFields': {
+      'mentions': {
+        '$map': {
+          'input': '$mentions', 
+          'as': 'mention', 
+          'in': {
+            '_id': '$$mention._id', 
+            'username': '$$mention._username', 
+            'email': '$$mention._email'
+          }
+        }
+      }
+    }
+  }, {
+    '$lookup': {
+      'from': 'comments', 
+      'localField': '_id', 
+      'foreignField': 'post_id', 
+      'as': 'comments'
+    }
+  }, {
+    '$lookup': {
+      'from': 'users', 
+      'localField': 'likes', 
+      'foreignField': '_id', 
+      'as': 'likes'
+    }
+  }, {
+    '$addFields': {
+      'likes': {
+        '$size': 'likes'
+      }, 
+      'comments': {
+        '$size': 'comments'
+      }
+    }
+  }
+]

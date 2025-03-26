@@ -1,11 +1,11 @@
-import { NextFunction, Request, Response } from 'express'
+import { Request, Response } from 'express'
 import { httpStatus } from '~/constants/httpStatus'
 import { USER_MESSAGES } from '~/constants/message'
 import { TokenPayload } from '~/models/request/user.request'
 import { User, IUser } from '~/models/user.models'
 import userService from '~/services/user.services'
 
-export const registerController = async (req: Request, res: Response, next: NextFunction) => {
+export const registerController = async (req: Request, res: Response) => {
   const { username, email, password }: { username: string; email: string; password: string } = req.body
   await userService.register({ email, password, username })
   res.status(201).json({
@@ -28,6 +28,13 @@ export const logoutController = async (req: Request, res: Response) => {
   const { refresh_token } = req.body
   await userService.logout(refresh_token)
   return res.status(200).json({ message: 'Logout successfully', success: true })
+}
+
+export const refreshTokenController = async (req: Request, res: Response) => {
+  const { user_id, verify } = req.decode_refresh_token as TokenPayload
+  const { refresh_token } = req.body
+  const result = await userService.refreshToken(user_id, verify as string, refresh_token)
+  return res.json({ result })
 }
 
 export const emailVerifyController = async (req: Request, res: Response) => {

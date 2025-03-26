@@ -1,13 +1,12 @@
 import bcrypt from 'bcrypt'
 import { tokenType } from '~/constants/enum'
 import { User } from '~/models/user.models'
-import { RefreshToken } from '~/models/refreshToken.model'
+import { RefreshToken } from '~/models/refreshToken.models'
 import { signToken } from '~/utils/jwt'
 import dotenv from 'dotenv'
 import { ObjectId } from 'mongodb'
-import { Follow } from '~/models/follow.model'
+import { Follow } from '~/models/follow.models'
 import { USER_MESSAGES } from '~/constants/message'
-import { message } from '~/models/message.models'
 dotenv.config()
 class UserService {
   private signAccessToken({ user_id, verify }: { user_id: string; verify: string }) {
@@ -22,11 +21,12 @@ class UserService {
       }
     })
   }
-  private signRefreshToken(user_id: string) {
+  private signRefreshToken({ user_id, verify }: { user_id: string; verify: string }) {
     return signToken({
       payload: {
         user_id,
-        token_type: tokenType.RefreshToken
+        token_type: tokenType.RefreshToken,
+        verify
       },
       options: {
         expiresIn: '100d'
@@ -58,7 +58,7 @@ class UserService {
     })
   }
   signAccessAndRefreshToken(user_id: string, verify: string) {
-    return Promise.all([this.signAccessToken({ user_id, verify }), this.signRefreshToken(user_id)])
+    return Promise.all([this.signAccessToken({ user_id, verify }), this.signRefreshToken({ user_id, verify })])
   }
   async register(payload: { email: string; password: string; username: string }) {
     const { email, password, username } = payload
@@ -79,7 +79,7 @@ class UserService {
   }
   async login(user_id: string, verify: string) {
     const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id, verify)
-    await RefreshToken.create({ user_id, token: refresh_token })
+    await RefreshToken.create({ user_id: new ObjectId(user_id), token: refresh_token })
     return { access_token, refresh_token }
   }
 
@@ -95,7 +95,7 @@ class UserService {
     })
   }
   async emailVerify(user_id: string) {
-    await Promise.all([
+    const [token] = await Promise.all([
       this.signAccessAndRefreshToken(user_id, 'Verified'),
       User.findByIdAndUpdate(
         user_id,
@@ -103,6 +103,8 @@ class UserService {
         { new: true, runValidators: true }
       )
     ])
+    const [access_token, refresh_token] = token
+    await RefreshToken.create({ user_id: new ObjectId(user_id), token: refresh_token })
   }
   async resendEmailVerify(user_id: string) {
     const email_verify_token = await this.signEmailVerifyToken(user_id)
@@ -175,6 +177,7 @@ class UserService {
     }
     return { message: USER_MESSAGES.FOLLOWED }
   }
+
   async unFollow(user_id: string, user_id_unfollow: string) {
     const user = await Follow.findOne({ follower: new ObjectId(user_id), following: new ObjectId(user_id_unfollow) })
     if (user !== null) {
@@ -186,9 +189,20 @@ class UserService {
     }
     return { message: USER_MESSAGES.UNFOLLOW_FAIL }
   }
+
   async changePassword(password: string, user_id: string) {
     const hash_password = await bcrypt.hash(password, 10)
     await User.findByIdAndUpdate(user_id, { password: hash_password }, { new: true, runValidators: true })
+  }
+
+  async refreshToken(user_id: string, verify: string, refresh_token: string) {
+    const [new_access_token, new_refresh_token] = await Promise.all([
+      this.signAccessToken({ user_id, verify }),
+      this.signRefreshToken({ user_id, verify }),
+      RefreshToken.findOneAndDelete({ token: refresh_token })
+    ])
+    await RefreshToken.create({ user_id: new ObjectId(user_id), token: new_refresh_token })
+    return { new_access_token, new_refresh_token }
   }
 }
 const userService = new UserService()

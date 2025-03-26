@@ -5,6 +5,9 @@ import connectDB from './utils/db'
 import cors from 'cors'
 import userRouter from './routers/user.routers'
 import { defaultErrorHandler } from './middlewares/error.middlewares'
+import bookmarksRouter from './routers/bookmark.routers'
+import postsRouter from './routers/post.routers'
+import likeRouter from './routers/like.routers'
 
 dotenv.config({})
 const PORT = process.env.PORT || 8000
@@ -18,6 +21,9 @@ const corsOptions = {
 }
 app.use(cors(corsOptions))
 app.use('/users', userRouter)
+app.use('/bookmarks', bookmarksRouter)
+app.use('/likes', likeRouter)
+app.use('/posts', postsRouter)
 app.use(defaultErrorHandler)
 app.listen(PORT, () => {
   connectDB()

@@ -11,8 +11,6 @@ export interface IUser extends Document {
   email_verify_token: string
   forgot_password_token: string
   verify?: 'Unverified' | 'Verified' | 'Banned'
-  posts: string[]
-  bookmarks: string[]
 }
 
 const userSchema = new Schema<IUser>(
@@ -26,8 +24,6 @@ const userSchema = new Schema<IUser>(
     email_verify_token: { type: String, default: '' },
     forgot_password_token: { type: String, default: '' },
     verify: { type: String, enum: ['Unverified', 'Verified', 'Banned'], default: 'Unverified' },
-    posts: [{ type: Schema.Types.ObjectId, ref: 'Post' }],
-    bookmarks: [{ type: Schema.Types.ObjectId, ref: 'Post' }]
   },
   { timestamps: true }
 )

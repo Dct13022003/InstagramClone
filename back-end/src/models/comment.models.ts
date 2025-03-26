@@ -1,9 +1,24 @@
-import mongoose from 'mongoose'
+import mongoose, { ObjectId, Schema } from 'mongoose'
 
-const commentSchema = new mongoose.Schema({
-  text: { type: String, require: true },
-  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  post: { type: mongoose.Schema.Types.ObjectId, ref: ' Post', required: true }
-})
+export interface IComment extends Document {
+  text: string
+  author: ObjectId
+  post_id: ObjectId
+  parent_id: ObjectId
+  mentions: string[]
+  likes: string[]
+}
 
-export const Comment = mongoose.model('Comment', commentSchema)
+const commentSchema = new Schema<IComment>(
+  {
+    text: { type: String, require: true },
+    author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    post_id: { type: Schema.Types.ObjectId, ref: ' Post', required: true },
+    parent_id: { type: Schema.Types.ObjectId, ref: 'Comment', required: true },
+    mentions: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    likes: [{ type: Schema.Types.ObjectId, ref: 'User' }]
+  },
+  { timestamps: true }
+)
+
+export const Comment = mongoose.model<IComment>('Comment', commentSchema)

@@ -7,12 +7,11 @@ import validate from '~/utils/validation'
 import { verifyToken } from '~/utils/jwt'
 import { ErrorWithStatus } from '~/models/error/error'
 import { httpStatus } from '~/constants/httpStatus'
-import { RefreshToken } from '~/models/refreshToken.model'
+import { RefreshToken } from '~/models/refreshToken.models'
 import { JsonWebTokenError } from 'jsonwebtoken'
 import { Request, Response, NextFunction } from 'express'
 import { TokenPayload } from '~/models/request/user.request'
 import { isValidObjectId } from 'mongoose'
-import { chain } from 'lodash'
 
 export const loginValidator = validate(
   checkSchema(
