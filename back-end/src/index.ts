@@ -8,6 +8,7 @@ import { defaultErrorHandler } from './middlewares/error.middlewares'
 import bookmarksRouter from './routers/bookmark.routers'
 import postsRouter from './routers/post.routers'
 import likeRouter from './routers/like.routers'
+// import '~/utils/fake'
 
 dotenv.config({})
 const PORT = process.env.PORT || 8000
