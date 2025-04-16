@@ -4,7 +4,6 @@ export interface IUser extends Document {
   username: string
   email: string
   password: string
-  day_of_birth?: Date
   profilePicture?: string
   bio?: string
   gender?: 'male' | 'female'
@@ -23,7 +22,7 @@ const userSchema = new Schema<IUser>(
     gender: { type: String, enum: ['male', 'female'] },
     email_verify_token: { type: String, default: '' },
     forgot_password_token: { type: String, default: '' },
-    verify: { type: String, enum: ['Unverified', 'Verified', 'Banned'], default: 'Unverified' },
+    verify: { type: String, enum: ['Unverified', 'Verified', 'Banned'], default: 'Unverified' }
   },
   { timestamps: true }
 )

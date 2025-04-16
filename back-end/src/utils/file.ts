@@ -1,11 +1,20 @@
 import { Request } from 'express'
 import { File } from 'formidable'
-import path from 'path'
+import fs from 'fs'
+import { upload_temp_dir } from '~/constants/dir'
+
+export const initFolder = () => {
+  if (!fs.existsSync(upload_temp_dir)) {
+    fs.mkdirSync(upload_temp_dir, {
+      recursive: true
+    })
+  }
+}
 
 export const handleUploadImage = async (req: Request) => {
   const formidable = (await import('formidable')).default
   const form = formidable({
-    uploadDir: path.resolve('uploads'),
+    uploadDir: upload_temp_dir,
     maxFields: 4,
     keepExtensions: true,
     maxFieldsSize: 300 * 1024,
@@ -24,9 +33,10 @@ export const handleUploadImage = async (req: Request) => {
         reject(err)
       }
       // eslint-disable-next-line no-extra-boolean-cast
-      if (!Boolean(files.name)) {
+      if (!Boolean(files.image)) {
         return reject(new Error('File is empty'))
       }
+      console.log('files', files)
       resolve(files.image as File[])
     })
   })
@@ -35,7 +45,7 @@ export const handleUploadImage = async (req: Request) => {
 export const handleUploadVideo = async (req: Request) => {
   const formidable = (await import('formidable')).default
   const form = formidable({
-    uploadDir: path.resolve('uploads'),
+    uploadDir: upload_temp_dir,
     maxFields: 4,
     keepExtensions: true,
     maxFieldsSize: 1024 * 1024,
@@ -54,10 +64,15 @@ export const handleUploadVideo = async (req: Request) => {
         reject(err)
       }
       // eslint-disable-next-line no-extra-boolean-cast
-      if (!Boolean(files.name)) {
+      if (!Boolean(files.image)) {
         return reject(new Error('File is empty'))
       }
       resolve(files.image as File[])
     })
   })
+}
+export const getNameFromFullName = (fullName: string) => {
+  const namearr = fullName.split('.')
+  namearr.pop()
+  return namearr.join('')
 }

@@ -1,4 +1,3 @@
-import './App.css'
 import useRouteElement from './useRouteElement'
 
 function App() {

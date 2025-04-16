@@ -5,7 +5,7 @@ import { CommentRequestBody } from '~/models/request/comment.request'
 
 class CommentService {
   async createComment(user_id: string, body: CommentRequestBody) {
-    Comment.create({
+    await Comment.create({
       text: body.text,
       mentions: body.mentions,
       likes: body.likes,
@@ -13,7 +13,7 @@ class CommentService {
     })
   }
   async getAllCommentInPost({ post_id, limit, page }: { post_id: string; limit: number; page: number }) {
-    const comments = Comment.aggregate([
+    const comments = await Comment.aggregate([
       {
         $match: {
           post_id: new ObjectId(post_id),
