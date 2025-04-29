@@ -1,15 +1,42 @@
 import axios, { type AxiosInstance } from 'axios'
+import { AuthResponse } from '../types/auth.type'
+import { getAccessTokenFromLS } from './auth'
 class Http {
   instance: AxiosInstance
+  private access_token: string
   constructor() {
+    this.access_token = getAccessTokenFromLS() as string
     this.instance = axios.create({
       baseURL: 'http://localhost:8000/',
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjdlOTg1MmU4ZWUyN2RlMGNmYWQxNGFkIiwidG9rZW5fdHlwZSI6MCwidmVyaWZ5IjoiVW52ZXJpZmllZCIsImlhdCI6MTc0NDgyOTg4MCwiZXhwIjoxNzQ0ODMxNjgwfQ.m9iCby0dHZ2nBUPbAxdLOPFQIy9l7R6xzEkDEknd2G4`
+        Accept: 'application/json'
       }
+    })
+    this.instance.interceptors.request.use(
+      (config) => {
+        const access_token = localStorage.getItem('access_token')
+        if (access_token) {
+          config.headers.Authorization = `Bearer ${access_token}`
+          return config
+        }
+        return config
+      },
+
+      (error) => {
+        return Promise.reject(error)
+      }
+    )
+
+    this.instance.interceptors.response.use((response) => {
+      const URL = response.config.url
+      if (URL === 'users/login' || URL === 'users/register') {
+        console.log('response:', response)
+        this.access_token = (response.data as AuthResponse).result.access_token
+        localStorage.setItem('access_token', this.access_token)
+      }
+      return response
     })
   }
 }

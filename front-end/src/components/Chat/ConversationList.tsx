@@ -1,13 +1,13 @@
+import { NavLink } from 'react-router-dom'
 import { Conversation } from '../../types/chat.type'
 
 interface ConversationListProps {
   conversations: Conversation[]
-  currentUser: string
-  onSelectConversation: (conversationId: string) => void
 }
 
 export default function ConversationList(Props: ConversationListProps) {
-  const { conversations, onSelectConversation } = Props
+  const { conversations } = Props
+  console.log('conversations', conversations)
   return (
     <div className='w-1/3 border-r border-gray-200'>
       <div className='p-4 border-b border-gray-200'>
@@ -16,13 +16,15 @@ export default function ConversationList(Props: ConversationListProps) {
       <div className='overflow-y-auto'>
         {conversations.map((conversation) => {
           return (
-            <div
+            <NavLink
+              to={`/chat/${conversation._id}`}
               key={conversation._id}
-              className='p-4 border-b border-gray-200 flex items-center cursor-pointer hover:bg-gray-50'
-              onClick={() => onSelectConversation(conversation._id)}
+              className={({ isActive }) =>
+                `p-4 border-b border-gray-200 flex items-center cursor-pointer ${isActive ? 'bg-gray-100' : ''} `
+              }
             >
               <div className='relative'>
-                {conversation.other_participant?.profilePicture ? (
+                {conversation.other_participants?.profilePicture ? (
                   <img
                     src={conversation.other_participant.profilePicture}
                     alt={conversation.other_participant.username}
@@ -43,7 +45,7 @@ export default function ConversationList(Props: ConversationListProps) {
                 <h3 className='font-medium'>{conversation.other_participant?.username}</h3>
                 <p className='text-sm text-gray-500 truncate w-40'>{conversation.last_message?.content}</p>
               </div>
-            </div>
+            </NavLink>
           )
         })}
       </div>

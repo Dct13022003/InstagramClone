@@ -43,10 +43,7 @@ class ConversationService {
       },
       {
         $project: {
-          // Ẩn thông tin nhạy cảm (nếu cần)
-          'participants_info.password': 0,
-          'participants_info.email': 0,
-          // Giữ lại các trường khác
+          _id: 1,
           is_group: 1,
           last_message: 1,
           updated_at: 1,

@@ -1,13 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-
-import { fetchMessages, sendMessage } from '../apis/chat.api'
+import { fetchConversations, fetchMessages, sendMessage } from '../apis/chat.api'
 import { Conversation, Message } from '../types/chat.type'
-import { SuccessResponse } from '../types/utils.type'
 
-export const useConversations = (userId: string) => {
+export const useConversations = () => {
   return useQuery<Conversation[]>({
-    queryKey: ['conversations', userId],
-    queryFn: () => fetchConversations(userId)
+    queryKey: ['conversations'],
+    queryFn: () => fetchConversations(1, 2)
   })
 }
 
@@ -25,7 +23,7 @@ export const useSendMessage = () => {
   return useMutation({
     mutationFn: sendMessage,
     onSuccess: (newMessage, variables) => {
-      queryClient.setQueryData<Message[]>(['messages', variables.conversationId], (oldMessages = []) => [
+      queryClient.setQueryData<Message[]>(['messages', variables.conversation], (oldMessages = []) => [
         ...oldMessages,
         newMessage
       ])

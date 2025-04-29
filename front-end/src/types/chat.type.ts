@@ -8,10 +8,10 @@ export interface Conversations {
 
 export interface Message {
   _id?: string
-  sender_id: string
-  receiver_id: string
+  senderId: string
+  receiverId: string
   content: string
-  conversation_id: string
+  conversation: string
   created_at?: string
   updated_at?: string
 }
@@ -22,5 +22,5 @@ export interface Conversation {
   last_message?: Message
   messages?: Message[]
   updated_at: string
-  other_participant?: User
+  other_participants?: User[]
 }

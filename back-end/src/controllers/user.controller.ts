@@ -9,8 +9,7 @@ export const registerController = async (req: Request, res: Response) => {
   const { username, email, password }: { username: string; email: string; password: string } = req.body
   await userService.register({ email, password, username })
   res.status(201).json({
-    message: 'Account create successfully',
-    success: true
+    message: 'Account create successfully'
   })
 }
 export const loginController = async (req: Request, res: Response) => {
@@ -20,7 +19,6 @@ export const loginController = async (req: Request, res: Response) => {
   const result = await userService.login(user_id.toString(), user_verify)
   res.status(200).json({
     message: 'Login successfully',
-    success: true,
     result
   })
 }
