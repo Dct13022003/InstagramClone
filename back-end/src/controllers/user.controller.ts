@@ -6,10 +6,16 @@ import { User, IUser } from '~/models/user.models'
 import userService from '~/services/user.services'
 
 export const registerController = async (req: Request, res: Response) => {
-  const { username, email, password }: { username: string; email: string; password: string } = req.body
-  await userService.register({ email, password, username })
+  const {
+    username,
+    email,
+    password,
+    fullname
+  }: { username: string; email: string; password: string; fullname: string } = req.body
+  const result = await userService.register({ email, password, username, fullname })
   res.status(201).json({
-    message: 'Account create successfully'
+    message: 'Account create successfully',
+    result
   })
 }
 export const loginController = async (req: Request, res: Response) => {
@@ -122,4 +128,14 @@ export const changePasswordController = async (req: Request, res: Response) => {
     message: USER_MESSAGES.CHANGE_PASSWORD_SUCCESS,
     result
   })
+}
+
+export const checkEmailExist = async (req: Request, res: Response) => {
+  const { email } = req.body
+  const result = await userService.checkEmail(email)
+  if (result) {
+    res.json({
+      messagse: USER_MESSAGES.EMAIL_ALREADY_EXISTS
+    })
+  }
 }

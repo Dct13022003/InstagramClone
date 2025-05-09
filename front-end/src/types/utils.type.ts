@@ -2,7 +2,12 @@ export interface SuccessResponse<T> {
   message: string
   result: T
 }
-export interface ErrorResponse {
+
+type FieldErrorDetail = {
+  msg: string
+  [key: string]: any
+}
+export interface ErrorResponse<T> {
   message: string
-  error: string
+  errors: Partial<Record<keyof T, string | FieldErrorDetail>>
 }

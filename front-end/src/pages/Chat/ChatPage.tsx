@@ -1,12 +1,14 @@
 import { useConversations } from '../../hooks/useMessages'
 import ConversationList from '../../components/Chat/ConversationList'
 import { Outlet, useParams } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useContext, useEffect } from 'react'
 import { Socket } from 'socket.io-client'
 import { connectSocket, disconnectSocket } from '../../utils/socket'
+import { AppContext } from '../../context/app.context'
 
 export default function ChatPage() {
-  const currentUser = '67e9852e8ee27de0cfad14ad'
+  const { profile } = useContext(AppContext)
+  const currentUser = profile?._id as string
   useEffect(() => {
     const socket: Socket = connectSocket(currentUser)
 
@@ -14,16 +16,13 @@ export default function ChatPage() {
       console.log('✅ Socket connected')
     })
 
-
     return () => {
       disconnectSocket()
     }
   }, [currentUser])
   const { conversationId } = useParams()
-  console.log('conversationId', conversationId)
 
   const { data: conversations } = useConversations()
-  console.log('render render')
 
   return (
     <div className='flex h-screen w-screen bg-white'>

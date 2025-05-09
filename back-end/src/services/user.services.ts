@@ -60,14 +60,15 @@ class UserService {
   signAccessAndRefreshToken(user_id: string, verify: string) {
     return Promise.all([this.signAccessToken({ user_id, verify }), this.signRefreshToken({ user_id, verify })])
   }
-  async register(payload: { email: string; password: string; username: string }) {
-    const { email, password, username } = payload
+  async register(payload: { email: string; password: string; username: string; fullname: string }) {
+    const { email, password, username, fullname } = payload
     const hash_password = await bcrypt.hash(password, 10)
     const user_id = new ObjectId()
     const emailVerifyToken = await this.signEmailVerifyToken(user_id.toString())
     await User.create({
       _id: user_id,
       username,
+      fullname,
       email,
       email_verify_token: emailVerifyToken,
       password: hash_password
@@ -80,7 +81,8 @@ class UserService {
   async login(user_id: string, verify: string) {
     const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id, verify)
     await RefreshToken.create({ user_id: new ObjectId(user_id), token: refresh_token })
-    return { access_token, refresh_token }
+    const user = await User.findById(user_id)
+    return { access_token, refresh_token, user }
   }
 
   async checkEmail(email: string) {

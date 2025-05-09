@@ -24,10 +24,10 @@ export default function ConversationList(Props: ConversationListProps) {
               }
             >
               <div className='relative'>
-                {conversation.other_participants?.profilePicture ? (
+                {conversation.other_participants?.[0].profilePicture ? (
                   <img
-                    src={conversation.other_participant.profilePicture}
-                    alt={conversation.other_participant.username}
+                    src={conversation.other_participants?.[0].profilePicture}
+                    alt={conversation.other_participants?.[0].username}
                     className='w-12 h-12 rounded-full object-cover'
                   />
                 ) : (
@@ -42,7 +42,7 @@ export default function ConversationList(Props: ConversationListProps) {
                 )} */}
               </div>
               <div className='ml-3'>
-                <h3 className='font-medium'>{conversation.other_participant?.username}</h3>
+                <h3 className='font-medium'>{conversation.other_participants?.[0].username}</h3>
                 <p className='text-sm text-gray-500 truncate w-40'>{conversation.last_message?.content}</p>
               </div>
             </NavLink>

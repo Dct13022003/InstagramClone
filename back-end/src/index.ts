@@ -50,16 +50,17 @@ io.on('connection', (socket) => {
   const user_id = socket.handshake.query?.user_id as string
   users[user_id] = { socketid: socket.id }
   console.log('user connected', user_id, socket.id)
+  console.log(users)
   socket.on('disconnect', () => {
     console.log('user disconnected', user_id, socket.id)
     delete users[user_id]
   })
   socket.on('send-message', async (msg) => {
-    const { conversationId, senderId, receiverId } = msg
-    if (users[receiverId]) socket.to(users[senderId].socketid).emit('new-message', msg)
+    const { conversation, senderId, receiverId } = msg
+    io.to(users[senderId].socketid).emit('resend-message', msg)
+    if (users[receiverId]) socket.to(users[receiverId].socketid).emit('new-message', msg)
     console.log('message', msg)
     // await Message.create(msg) // Lưu tin nhắn vào cơ sở dữ liệu
-    
   })
 })
 httpServer.listen(PORT, () => {

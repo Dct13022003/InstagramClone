@@ -7,7 +7,7 @@ export const getConversationController = async (req: Request, res: Response) => 
   const { conversationId } = req.params as { conversationId: string }
   const conversation = await conversationService.getConversation(user_id, conversationId)
   res.status(200).json({
-    data: conversation
+    result: conversation
   })
 }
 export const getAllConversationController = async (req: Request, res: Response) => {
@@ -17,7 +17,7 @@ export const getAllConversationController = async (req: Request, res: Response) 
   const conversations = await conversationService.getAllConversationService(user_id, page, limit)
   res.status(200).json({
     message: 'Get conversations successfully',
-    data: conversations
+    result: conversations
   })
 }
 
@@ -27,7 +27,7 @@ export const createConversationController = async (req: Request, res: Response) 
   const conversation = await conversationService.createConversation(user_id, receiverId)
   res.status(200).json({
     message: 'Create conversation successfully',
-    data: conversation
+    result: conversation
   })
 }
 
@@ -37,7 +37,7 @@ export const deleteConversationController = async (req: Request, res: Response) 
   const conversation = await conversationService.deleteConversation(user_id, conversationId)
   res.status(200).json({
     message: 'Delete conversation successfully',
-    data: conversation
+    result: conversation
   })
 }
 
@@ -51,6 +51,6 @@ export const createMessageController = async (req: Request, res: Response) => {
   const message = await conversationService.createMessage(user_id, conversation_id, receiver_id, content)
   res.status(200).json({
     message: 'Create message successfully',
-    data: message
+    result: message
   })
 }

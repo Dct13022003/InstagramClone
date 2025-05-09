@@ -19,13 +19,30 @@ export default function MessageList() {
   const queryClient = useQueryClient()
   useEffect(() => {
     const socket = getSocket()
-    if (!socket) return
-    socket.on('new-message', (msg) => {
-      if (msg.conversationId === conversationId) {
+    if (!socket) {
+      console.log('Không có socket')
+      return
+    }
+    socket.on('resend-message', (msg: Message) => {
+      console.log('KKSKSKSKSKKSKSKS')
+      console.log('messagge:', msg)
+      if (msg.conversation === conversationId) {
         queryClient.setQueryData<Message[]>(['messages', conversationId], (old = []) => [...old, msg])
       }
+      const cached = queryClient.getQueryData(['messages', conversationId])
+      console.log('📦 Cache messages:', cached)
     })
+    socket.on('new-message', (msg: Message) => {
+      console.log('hshshshshshshs')
+      if (msg.conversation === conversationId) {
+        queryClient.setQueryData<Message[]>(['messages', conversationId], (old = []) => [...old, msg])
+      }
+      const cached = queryClient.getQueryData(['messages', conversationId])
+      console.log('📦 Cache messages:', cached)
+    })
+
     return () => {
+      socket.off('resend-message')
       socket.off('new-message')
     }
   }, [conversationId])
@@ -35,15 +52,15 @@ export default function MessageList() {
     const conversation = conversations?.find((c) => c._id === conversationId)
 
     const receiverId = conversation?.other_participants?.[0]._id
+    console.log(conversation)
 
     if (receiverId) {
       const msg = {
-        conversationId,
+        conversation: conversationId,
         senderId: currentUser,
         receiverId,
         content
       }
-      console.log('msg', msg)
       const socket = getSocket()
       if (!socket) return
       socket.emit('send-message', msg) // gửi trực tiếp tới server

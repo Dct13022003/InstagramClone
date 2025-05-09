@@ -86,6 +86,22 @@ export const registerValidator = validate(
         },
         trim: true
       },
+      fullname: {
+        isLength: {
+          options: {
+            min: 1,
+            max: 20
+          },
+          errorMessage: USER_MESSAGES.NAME_MUST_BE_BETWEEN_1_AND_20_CHARACTERS
+        },
+        notEmpty: {
+          errorMessage: USER_MESSAGES.NAME_IS_REQUIRED
+        },
+        isString: {
+          errorMessage: USER_MESSAGES.NAME_MUST_BE_STRING
+        },
+        trim: true
+      },
       email: {
         isEmail: {
           errorMessage: USER_MESSAGES.EMAIL_IS_INVALID
@@ -115,17 +131,17 @@ export const registerValidator = validate(
             max: 20
           },
           errorMessage: USER_MESSAGES.PASS_MUST_BE_BETWEEN_6_AND_20_CHARACTERS
-        },
-        isStrongPassword: {
-          options: {
-            minLength: 6,
-            minLowercase: 1,
-            minNumbers: 1,
-            minUppercase: 1,
-            minSymbols: 0
-          },
-          errorMessage: USER_MESSAGES.PASS_MUST_BE_STRONG
         }
+        // isStrongPassword: {
+        //   options: {
+        //     minLength: 6,
+        //     minLowercase: 1,
+        //     minNumbers: 1,
+        //     minUppercase: 1,
+        //     minSymbols: 0
+        //   },
+        //   errorMessage: USER_MESSAGES.PASS_MUST_BE_STRONG
+        // }
       },
       confirm_password: {
         notEmpty: {
@@ -141,16 +157,16 @@ export const registerValidator = validate(
           },
           errorMessage: USER_MESSAGES.PASS_MUST_BE_BETWEEN_6_AND_20_CHARACTERS
         },
-        isStrongPassword: {
-          options: {
-            minLength: 6,
-            minLowercase: 1,
-            minNumbers: 1,
-            minUppercase: 1,
-            minSymbols: 0
-          },
-          errorMessage: USER_MESSAGES.PASS_MUST_BE_STRONG
-        },
+        // isStrongPassword: {
+        //   options: {
+        //     minLength: 6,
+        //     minLowercase: 1,
+        //     minNumbers: 1,
+        //     minUppercase: 1,
+        //     minSymbols: 0
+        //   },
+        //   errorMessage: USER_MESSAGES.PASS_MUST_BE_STRONG
+        // },
         custom: {
           options: async (value, { req }) => {
             const { password } = req.body

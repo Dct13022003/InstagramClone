@@ -4,7 +4,7 @@ import { SuccessResponse } from '../types/utils.type'
 
 const API_URL = 'inbox'
 
-export const fetchConversations = async (page?: number, limit?: number): Promise<Conversation[]> => {
+export const  fetchConversations = async (page?: number, limit?: number): Promise<Conversation[]> => {
   const { data } = await http.get<SuccessResponse<Conversation[]>>(`${API_URL}/`, {
     params: {
       page: page || 1,

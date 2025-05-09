@@ -12,16 +12,17 @@ type FormValues = {
   password: string
 }
 export default function Login() {
-  const { setIsAuthenticated } = useContext(AppContext)
+  const { setIsAuthenticated, setProfile } = useContext(AppContext)
   const { register, handleSubmit } = useForm<FormValues>()
   const navigate = useNavigate()
   const loginMutation = useMutation({
     mutationFn: (body: FormValues) => login(body)
   })
-  const onSubmit = handleSubmit((data: FormValues) => {
+  const onSubmit = handleSubmit((data) => {
     loginMutation.mutate(data, {
-      onSuccess: () => {
+      onSuccess: (data) => {
         setIsAuthenticated(true)
+        setProfile(data.data.result.user)
         navigate('/chat')
       },
       onError: (error) => {

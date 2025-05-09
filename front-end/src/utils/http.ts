@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance } from 'axios'
 import { AuthResponse } from '../types/auth.type'
-import { getAccessTokenFromLS } from './auth'
+import { getAccessTokenFromLS, setProfileLS } from './auth'
 class Http {
   instance: AxiosInstance
   private access_token: string
@@ -31,10 +31,11 @@ class Http {
 
     this.instance.interceptors.response.use((response) => {
       const URL = response.config.url
-      if (URL === 'users/login' || URL === 'users/register') {
+      if (URL === 'users/login') {
         console.log('response:', response)
         this.access_token = (response.data as AuthResponse).result.access_token
         localStorage.setItem('access_token', this.access_token)
+        setProfileLS((response.data as AuthResponse).result.user)
       }
       return response
     })
