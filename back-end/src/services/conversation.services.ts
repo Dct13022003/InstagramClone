@@ -2,14 +2,19 @@ import { Conversation } from '~/models/conversation.models'
 import { ObjectId } from 'mongodb'
 import { Message } from '~/models/message.models'
 class ConversationService {
-  async getConversation(user_id: string, conversationId: string) {
+  async getConversation({ user_id, conversationId, page }: { user_id: string; conversationId: string; page: number }) {
     // Simulate a database call to get conversation
-    const conversation = await Message.find({
+    const messages = await Message.find({
       conversation: new ObjectId(conversationId)
     })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .skip((page - 1) * 10)
       .select('-__v')
       .lean()
-    return conversation
+    const totalMessages = await Message.countDocuments()
+    const hasNextPage = page * 10 < totalMessages
+    return { messages, hasNextPage }
   }
   async getAllConversationService(user_id: string, page: number, limit: number) {
     // Simulate a database call to get all conversations for a user

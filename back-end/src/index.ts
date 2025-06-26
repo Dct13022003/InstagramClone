@@ -34,7 +34,7 @@ app.use('/bookmarks', bookmarksRouter)
 app.use('/likes', likeRouter)
 app.use('/posts', postsRouter)
 app.use('/medias', mediasRouter)
-app.use('/inbox', conversationRouter)
+app.use('/conversations', conversationRouter)
 app.use(defaultErrorHandler)
 
 const users: { [key: string]: { socketid: string } } = {}
@@ -60,7 +60,7 @@ io.on('connection', (socket) => {
     io.to(users[senderId].socketid).emit('resend-message', msg)
     if (users[receiverId]) socket.to(users[receiverId].socketid).emit('new-message', msg)
     console.log('message', msg)
-    // await Message.create(msg) // Lưu tin nhắn vào cơ sở dữ liệu
+    await Message.create(msg) // Lưu tin nhắn vào cơ sở dữ liệu
   })
 })
 httpServer.listen(PORT, () => {

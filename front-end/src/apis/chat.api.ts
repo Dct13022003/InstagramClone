@@ -1,10 +1,10 @@
-import { Conversation, Message } from '../types/chat.type'
+import { Conversation, GetMessagesResponse, Message } from '../types/chat.type'
 import http from '../utils/http'
 import { SuccessResponse } from '../types/utils.type'
 
-const API_URL = 'inbox'
+const API_URL = 'conversations'
 
-export const  fetchConversations = async (page?: number, limit?: number): Promise<Conversation[]> => {
+export const fetchConversations = async (page?: number, limit?: number): Promise<Conversation[]> => {
   const { data } = await http.get<SuccessResponse<Conversation[]>>(`${API_URL}/`, {
     params: {
       page: page || 1,
@@ -14,8 +14,18 @@ export const  fetchConversations = async (page?: number, limit?: number): Promis
   return data.result
 }
 
-export const fetchMessages = async (conversationId: string): Promise<Message[]> => {
-  const { data } = await http.get<SuccessResponse<Message[]>>(`${API_URL}/conversations/${conversationId}`)
+export const fetchMessages = async ({
+  conversationId,
+  page
+}: {
+  conversationId: string
+  page?: number
+}): Promise<GetMessagesResponse> => {
+  const { data } = await http.get<SuccessResponse<GetMessagesResponse>>(`${API_URL}/${conversationId}/messages`, {
+    params: {
+      page: page || 1
+    }
+  })
   return data.result
 }
 

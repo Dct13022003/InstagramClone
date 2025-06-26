@@ -17,6 +17,6 @@ const conversationRouter = Router()
  */
 conversationRouter.get('/', accessTokenValidator, wrapAsync(getAllConversationController))
 conversationRouter.post('/create', accessTokenValidator, wrapAsync(createConversationController))
-conversationRouter.post('/messages', accessTokenValidator, wrapAsync(createMessageController))
-conversationRouter.get('/conversations/:conversationId', accessTokenValidator, wrapAsync(getConversationController))
+conversationRouter.post('/:conversationId/messages', accessTokenValidator, wrapAsync(createMessageController))
+conversationRouter.get('/:conversationId/messages', accessTokenValidator, wrapAsync(getConversationController))
 export default conversationRouter

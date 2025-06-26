@@ -12,8 +12,8 @@ export interface Message {
   receiverId: string
   content: string
   conversation: string
-  created_at?: string
-  updated_at?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface Conversation {
@@ -23,4 +23,9 @@ export interface Conversation {
   messages?: Message[]
   updated_at: string
   other_participants?: User[]
+}
+
+export interface GetMessagesResponse {
+  messages: Message[]
+  hasNextPage: boolean
 }

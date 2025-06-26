@@ -4,8 +4,9 @@ import { conversationService } from '~/services/conversation.services'
 
 export const getConversationController = async (req: Request, res: Response) => {
   const { user_id } = req.decode_authorization as TokenPayload
+  const page = parseInt(req.query.page as string)
   const { conversationId } = req.params as { conversationId: string }
-  const conversation = await conversationService.getConversation(user_id, conversationId)
+  const conversation = await conversationService.getConversation({ user_id, conversationId, page })
   res.status(200).json({
     result: conversation
   })

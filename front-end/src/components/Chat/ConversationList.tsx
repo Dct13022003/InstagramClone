@@ -13,7 +13,7 @@ export default function ConversationList(Props: ConversationListProps) {
       <div className='p-4 border-b border-gray-200'>
         <h2 className='text-xl font-semibold'>Tin nhắn</h2>
       </div>
-      <div className='overflow-y-auto'>
+      <div className='divide-y'>
         {conversations.map((conversation) => {
           return (
             <NavLink
@@ -25,13 +25,19 @@ export default function ConversationList(Props: ConversationListProps) {
             >
               <div className='relative'>
                 {conversation.other_participants?.[0].profilePicture ? (
-                  <img
-                    src={conversation.other_participants?.[0].profilePicture}
-                    alt={conversation.other_participants?.[0].username}
-                    className='w-12 h-12 rounded-full object-cover'
-                  />
+                  <div>
+                    <img
+                      src={conversation.other_participants?.[0].profilePicture}
+                      alt={conversation.other_participants?.[0].username}
+                      className='w-24 h-24 rounded-full object-cover'
+                    />
+                    <div className='flex flex-col'>
+                      <p className='font-medium'>{conversation.other_participants?.[0].username}</p>
+                      <p className='text-sm text-gray-500'>Bạn: XII SJJ</p>
+                    </div>
+                  </div>
                 ) : (
-                  <div className='w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center'>
+                  <div className='w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center'>
                     {/* <FiUser size={20} /> */}
                   </div>
                 )}
