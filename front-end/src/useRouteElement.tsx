@@ -3,10 +3,12 @@ import Register from './pages/Register'
 import { Navigate, Outlet, useRoutes } from 'react-router-dom'
 
 import ChatPage from './pages/Chat/ChatPage'
-import RegisterLayout from './layouts/RegisterLayout'
+
 import MessageList from './components/Chat/MessageList'
-import { useContext } from 'react'
+import React, { useContext } from 'react'
 import { AppContext } from './context/app.context'
+import path from './constants/path'
+import MainLayout from './layouts/MainLayout'
 
 function ProtectedRoute() {
   const { isAuthenticated } = useContext(AppContext)
@@ -25,9 +27,20 @@ export default function useRouteElement() {
       element: <ProtectedRoute />,
       children: [
         {
-          path: '/chat',
-          element: <ChatPage />,
-          children: [{ path: ':conversationId', element: <MessageList /> }]
+          path: '',
+          element: React.createElement(MainLayout),
+          children: [
+            {
+              path: path.chat,
+              element: <ChatPage />,
+              children: [
+                {
+                  path: ':conversationId',
+                  element: <MessageList />
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -36,20 +49,12 @@ export default function useRouteElement() {
       element: <RejectedRoute />,
       children: [
         {
-          path: '/login',
-          element: (
-            <RegisterLayout>
-              <Login />
-            </RegisterLayout>
-          )
+          path: path.login,
+          element: <Login />
         },
         {
-          path: '/register',
-          element: (
-            <RegisterLayout>
-              <Register />
-            </RegisterLayout>
-          )
+          path: path.register,
+          element: <Register />
         }
       ]
     }

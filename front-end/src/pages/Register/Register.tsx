@@ -6,7 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { schema } from '../../utils/rules'
 import InputForm from '../../components/InputForm'
 import { useNavigate } from 'react-router-dom'
-import { isAxiosErrorUnprocessableEntityError } from '../../utils/utils'
+import { isAxiosUnprocessableEntityError } from '../../utils/utils'
 import { ErrorResponse } from '../../types/utils.type'
 import { Button } from '../../components/ui/button'
 type FormValues = {
@@ -37,7 +37,7 @@ export default function Register() {
       },
       onError: (error) => {
         console.log(error)
-        if (isAxiosErrorUnprocessableEntityError<ErrorResponse<FormValues>>(error)) {
+        if (isAxiosUnprocessableEntityError<ErrorResponse<FormValues>>(error)) {
           const formError = error.response?.data.errors
 
           if (formError) {

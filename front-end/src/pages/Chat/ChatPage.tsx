@@ -13,7 +13,7 @@ export default function ChatPage() {
   const { data: conversations } = useConversations()
 
   return (
-    <div className='flex h-screen w-screen bg-white'>
+    <div className='flex flex-1 h-screen bg-white'>
       {conversations && <ConversationList conversations={conversations} />}
 
       <div className='flex-1 flex flex-col'>

@@ -23,8 +23,8 @@ export default function MessageList() {
   const queryClient = useQueryClient()
   console.log('data:', data)
   const messages = data?.pages.flatMap((page) => page.messages) ?? []
-  const messagesToRender = data ? groupMessagesByTime(messages) : []
-  console.log('messagesToRender:', messages)
+  const messagesToRender = data ? groupMessagesByTime([...messages].reverse()).reverse() : []
+  console.log('messagesToRender:', messagesToRender)
   const hasMore = data?.pages[data.pages.length - 1]?.hasNextPage ?? false
   useEffect(() => {
     bottomRef.current.scrollIntoView({ behavior: 'smooth' })
@@ -103,7 +103,7 @@ export default function MessageList() {
             style={{ display: 'flex', flexDirection: 'column-reverse' }} //To put endMessage and loader to the top.
             inverse={true} //
             hasMore={hasMore}
-            loader={<h4>Loading...</h4>}
+            loader={<h4></h4>}
             scrollableTarget='scrollableDiv'
           >
             {messagesToRender &&
@@ -119,10 +119,10 @@ export default function MessageList() {
                   const message = item.message as Message
                   const isCurrentUser = message.senderId === currentUser
                   return (
-                    <div key={message._id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-2`}>
+                    <div key={message._id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-1`}>
                       <div
                         className={`rounded-lg px-4 py-2 max-w-xs ${
-                          isCurrentUser ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-900'
+                          isCurrentUser ? 'bg-blue-500 text-white mr-5' : 'bg-gray-100 text-gray-900 ml-5'
                         }`}
                       >
                         {message.content}

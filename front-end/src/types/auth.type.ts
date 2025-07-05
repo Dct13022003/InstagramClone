@@ -6,3 +6,8 @@ export type AuthResponse = SuccessResponse<{
   refresh_token: string
   user: User
 }>
+
+export type RefreshTokenResponse = SuccessResponse<{
+  new_access_token: string
+  new_refresh_token: string
+}>

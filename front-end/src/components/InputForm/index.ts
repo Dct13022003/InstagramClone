@@ -1,3 +1,3 @@
-import InputForm from "./inputForm" 
+import InputForm from './InputForm'
 
 export default InputForm

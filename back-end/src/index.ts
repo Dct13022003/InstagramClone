@@ -57,10 +57,11 @@ io.on('connection', (socket) => {
   })
   socket.on('send-message', async (msg) => {
     const { conversation, senderId, receiverId } = msg
-    io.to(users[senderId].socketid).emit('resend-message', msg)
-    if (users[receiverId]) socket.to(users[receiverId].socketid).emit('new-message', msg)
-    console.log('message', msg)
-    await Message.create(msg) // Lưu tin nhắn vào cơ sở dữ liệu
+    const resend_msg = await Message.create(msg)
+    io.to(users[senderId].socketid).emit('resend-message', resend_msg)
+    if (users[receiverId]) socket.to(users[receiverId].socketid).emit('new-message', resend_msg)
+    console.log('message', resend_msg)
+    // Lưu tin nhắn vào cơ sở dữ liệu
   })
 })
 httpServer.listen(PORT, () => {

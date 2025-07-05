@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState } from 'react'
 
-import { getAccessTokenFromLS, getProfileLS } from '../utils/auth'
+import { getAccessTokenFromLS, getProfileFromLS } from '../utils/auth'
 import { User } from '../types/user.type'
 import { Socket } from 'socket.io-client'
 import { connectSocket, disconnectSocket, getSocket } from '../utils/socket'
@@ -17,7 +17,7 @@ interface AppContextInterface {
 export const getInitialAppContext: () => AppContextInterface = () => ({
   isAuthenticated: Boolean(getAccessTokenFromLS()),
   setIsAuthenticated: () => null,
-  profile: getProfileLS(),
+  profile: getProfileFromLS(),
   setProfile: () => null,
   socket: null,
   setSocket: () => null
