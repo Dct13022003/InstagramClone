@@ -9,6 +9,7 @@ import React, { useContext } from 'react'
 import { AppContext } from './context/app.context'
 import path from './constants/path'
 import MainLayout from './layouts/MainLayout'
+import Profile from './pages/Profile'
 
 function ProtectedRoute() {
   const { isAuthenticated } = useContext(AppContext)
@@ -39,6 +40,11 @@ export default function useRouteElement() {
                   element: <MessageList />
                 }
               ]
+            },
+            {
+              path: path.profile,
+              element: <Profile />,
+              children: [{}]
             }
           ]
         }
