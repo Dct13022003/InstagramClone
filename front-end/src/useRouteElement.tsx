@@ -10,6 +10,7 @@ import { AppContext } from './context/app.context'
 import path from './constants/path'
 import MainLayout from './layouts/MainLayout'
 import Profile from './pages/Profile'
+import Post from './components/Post'
 
 function ProtectedRoute() {
   const { isAuthenticated } = useContext(AppContext)
@@ -44,6 +45,16 @@ export default function useRouteElement() {
             {
               path: path.profile,
               element: <Profile />,
+              children: [
+                {
+                  // path: 'posts',
+                  // element: <Post />
+                }
+              ]
+            },
+            {
+              path: '/posts',
+              element: <Post />,
               children: [{}]
             }
           ]

@@ -13,7 +13,7 @@ export const registerUser = (body: {
   confirm_password: string
   username: string
   fullname: string
-}) => http.post<AuthResponse>('/register', body)
+}) => http.post<AuthResponse>(URL_REGISTER, body)
 export const logout = (body: { refresh_token: string }) => http.post<AuthResponse>(URL_LOGOUT, body)
 export const refreshToken = (body: { refresh_token: string }) => http.post<AuthResponse>(URL_REFRESH_TOKEN, body)
 export const emailVerify = (body: { email_verify_token: string }) => http.post<AuthResponse>(URL_EMAIL_VERIFY, body)

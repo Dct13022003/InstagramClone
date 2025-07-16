@@ -41,7 +41,11 @@ export const USER_MESSAGES = {
   UNFOLLOW_FAIL: 'Unfollow fail',
   CONFIRM_PASSWORD_MUST_BE_SAME_PASSWORD: 'Confirm password must be same password',
   OLD_PASSWORD_NOT_MATCH: 'Old password not match',
-  CHANGE_PASSWORD_SUCCESS: 'Change password success'
+  CHANGE_PASSWORD_SUCCESS: 'Change password success',
+  UPLOAD_AVATAR_SUCCESS: 'Upload image success',
+  LOGIN_SUCCESS: 'Login successfully',
+  LOGOUT_SUCCESS: 'Logout successfully',
+  REGISTER_SUCCESS: 'Account create successfully'
 } as const
 
 export const POST_MESSAGES = {
@@ -63,3 +67,8 @@ export const LIKE_MESSAGES = {
   LIKE_SUCCESS: 'Like success',
   UNLIKE_SUCCESS: 'Unlike success'
 } as const
+
+export const MEDIA_MESSAGES = {
+  UPLOAD_IMAGE_SUCCESS: 'Upload image success',
+  UPLOAD_VIDEO_SUCCESS: 'Upload video success'
+}

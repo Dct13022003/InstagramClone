@@ -3,6 +3,7 @@ import { httpStatus } from '~/constants/httpStatus'
 import { USER_MESSAGES } from '~/constants/message'
 import { TokenPayload } from '~/models/request/user.request'
 import { User, IUser } from '~/models/user.models'
+import { mediaService } from '~/services/media.services'
 import userService from '~/services/user.services'
 
 export const registerController = async (req: Request, res: Response) => {
@@ -13,8 +14,8 @@ export const registerController = async (req: Request, res: Response) => {
     fullname
   }: { username: string; email: string; password: string; fullname: string } = req.body
   const result = await userService.register({ email, password, username, fullname })
-  res.status(201).json({
-    message: 'Account create successfully',
+  res.status(httpStatus.CREATED).json({
+    message: USER_MESSAGES.REGISTER_SUCCESS,
     result
   })
 }
@@ -23,15 +24,15 @@ export const loginController = async (req: Request, res: Response) => {
   const user_id = user._id
   const user_verify = user.verify as string
   const result = await userService.login(user_id.toString(), user_verify)
-  res.status(200).json({
-    message: 'Login successfully',
+  res.status(httpStatus.OK).json({
+    message: USER_MESSAGES.LOGIN_SUCCESS,
     result
   })
 }
 export const logoutController = async (req: Request, res: Response) => {
   const { refresh_token } = req.body
   await userService.logout(refresh_token)
-  return res.status(200).json({ message: 'Logout successfully', success: true })
+  return res.status(httpStatus.OK).json({ message: USER_MESSAGES.LOGOUT_SUCCESS })
 }
 
 export const refreshTokenController = async (req: Request, res: Response) => {
@@ -94,9 +95,9 @@ export const resetPasswordController = async (req: Request, res: Response) => {
 
 export const getProfileController = async (req: Request, res: Response) => {
   const { user_id } = req.decode_authorization as TokenPayload
-  const user = await userService.getProfile(user_id)
+  const result = await userService.getProfile(user_id)
   return res.json({
-    user
+    result
   })
 }
 
@@ -135,7 +136,17 @@ export const checkEmailExist = async (req: Request, res: Response) => {
   const result = await userService.checkEmail(email)
   if (result) {
     res.json({
-      messagse: USER_MESSAGES.EMAIL_ALREADY_EXISTS
+      message: USER_MESSAGES.EMAIL_ALREADY_EXISTS
     })
   }
+}
+
+export const uploadAvatarController = async (req: Request, res: Response) => {
+  const { user_id } = req.decode_authorization as TokenPayload
+  const avatar = await mediaService.upLoadImage(req)
+  const result = await userService.updateProfile(user_id, { profilePicture: avatar[0].url })
+  return res.json({
+    message: USER_MESSAGES.UPLOAD_AVATAR_SUCCESS,
+    result
+  })
 }

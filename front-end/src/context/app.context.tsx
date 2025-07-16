@@ -3,7 +3,7 @@ import { createContext, useEffect, useState } from 'react'
 import { getAccessTokenFromLS, getProfileFromLS } from '../utils/auth'
 import { User } from '../types/user.type'
 import { Socket } from 'socket.io-client'
-import { connectSocket, disconnectSocket, getSocket } from '../utils/socket'
+import { connectSocket, disconnectSocket } from '../utils/socket'
 
 interface AppContextInterface {
   isAuthenticated: boolean
@@ -41,6 +41,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       })
       setSocket(socket)
       return () => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         socket && disconnectSocket()
       }
     }

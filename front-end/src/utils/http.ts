@@ -75,6 +75,7 @@ class Http {
           const config = error.response?.config || {}
           const { URL } = config
           if (URL !== URL_REFRESH_TOKEN && isAxiosExpiredTokenError(error)) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             this.refresh_token_request
               ? this.refresh_token_request
               : this.handleRefreshToken().finally(() => {

@@ -12,7 +12,8 @@ import {
   resendEmailVerifyController,
   resetPasswordController,
   unFollowController,
-  updateProfileController
+  updateProfileController,
+  uploadAvatarController
 } from '~/controllers/user.controller'
 import {
   emailVerifyTokenValidator,
@@ -109,7 +110,7 @@ userRouter.post('/reset-password', resetPasswordValidator, wrapAsync(resetPasswo
  * Method: GET
  * Headers: {Authorization: Bearer <access_token>}
  */
-userRouter.get('/get-profile', accessTokenValidator, wrapAsync(getProfileController))
+userRouter.get('/me', accessTokenValidator, wrapAsync(getProfileController))
 
 /**
  * Description. update profile
@@ -162,5 +163,19 @@ userRouter.put(
   verifyUserValidator,
   changePasswordValidator,
   wrapAsync(changePasswordController)
+)
+
+/**
+ * Description: Upload avatar
+ * Route: /upload-avatar
+ * Method: POST
+ * Headers: {Authorization: Bearer <access_token>}
+ * Body: {avatar: file}
+ */
+userRouter.post(
+  '/upload-avatar',
+  accessTokenValidator,
+  // verifyUserValidator,
+  wrapAsync(uploadAvatarController)
 )
 export default userRouter

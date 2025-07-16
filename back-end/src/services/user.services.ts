@@ -78,10 +78,12 @@ class UserService {
     await RefreshToken.create({ user_id, token: refresh_token })
     return { access_token, refresh_token }
   }
+
   async login(user_id: string, verify: string) {
     const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id, verify)
     await RefreshToken.create({ user_id: new ObjectId(user_id), token: refresh_token })
-    const user = await User.findById(user_id)
+    const user = await User.findById(user_id).select('-password -email_verify_token -forgot_password_token')
+
     return { access_token, refresh_token, user }
   }
 
@@ -145,7 +147,9 @@ class UserService {
       email_verify_token: 0,
       forgot_password_token: 0
     })
-    return user
+    const followingCount = await Follow.countDocuments({ follower: new ObjectId(user_id) })
+    const followerCount = await Follow.countDocuments({ following: new ObjectId(user_id) })
+    return { user, followingCount, followerCount }
   }
 
   async updateProfile(user_id: string, payload: any) {
@@ -205,6 +209,22 @@ class UserService {
     ])
     await RefreshToken.create({ user_id: new ObjectId(user_id), token: new_refresh_token })
     return { new_access_token, new_refresh_token }
+  }
+
+  async uploadAvatar(user_id: string, avatar_url: string) {
+    const avatar_user = await User.findByIdAndUpdate(
+      user_id,
+      {
+        profilePicture: avatar_url
+      },
+      {
+        new: true,
+        projection: {
+          profilePicture: 1
+        }
+      }
+    )
+    return avatar_user
   }
 }
 const userService = new UserService()
