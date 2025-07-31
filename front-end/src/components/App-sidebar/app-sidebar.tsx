@@ -12,18 +12,18 @@ import {
 } from '../ui/sidebar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu'
 import { Collapsible, CollapsibleTrigger } from '../ui/collapsible'
+import { NavLink } from 'react-router-dom'
 
-// Menu items.
 const items = [
   {
     title: 'Home',
-    url: '#',
+    url: '/',
     icon: Home,
     isActive: true
   },
   {
     title: 'Inbox',
-    url: '#',
+    url: '/chat',
     icon: Inbox,
     isActive: false
   },
@@ -61,9 +61,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <SidebarMenuButton
                       tooltip={item.title}
                       className='w-full h-12 group-data-[collapsible=icon]:size-12!'
+                      asChild
                     >
-                      {item.icon && <item.icon className='!w-8 !h-8' />}
-                      <span className='ml-3 text-xl truncate group-data-[state=collapsed]:hidden'>{item.title}</span>
+                      <NavLink to={item.url}>
+                        {item.icon && <item.icon className='!w-8 !h-8' />}
+                        <span className='ml-3 text-xl truncate group-data-[state=collapsed]:hidden'>{item.title}</span>
+                      </NavLink>
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                 </SidebarMenuItem>

@@ -13,7 +13,7 @@ const postsRouter = Router()
  * Headers: {Authorization: Bearer <access_token>}
  * Body:{caption?: string, hashtag?:string[],mention?:string[], media?:Media[]}
  */
-postsRouter.post('/', accessTokenValidator, verifyUserValidator, createPostValidator, wrapAsync(createPostController))
+postsRouter.post('/', accessTokenValidator, wrapAsync(createPostController))
 /**
  * Description. Get detail post
  * Route: /:post_id

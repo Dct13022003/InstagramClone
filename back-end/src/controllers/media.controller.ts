@@ -7,6 +7,6 @@ export const uploadSingleImage = async (req: Request, res: Response, next: NextF
   const result = await mediaService.upLoadImage(req)
   return res.status(httpStatus.OK).json({
     message: MEDIA_MESSAGES.UPLOAD_IMAGE_SUCCESS,
-    data: result
+    result
   })
 }

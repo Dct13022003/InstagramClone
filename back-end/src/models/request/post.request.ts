@@ -3,7 +3,7 @@ export interface PostRequestBody {
   hashtags: string[]
   mentions: string[]
   likes: string[]
-  // medias: Media[]
+  imageUrl: string[]
 }
 
 export interface PostParam {

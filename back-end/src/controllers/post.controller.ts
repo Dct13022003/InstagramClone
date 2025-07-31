@@ -8,6 +8,7 @@ import { POST_MESSAGES } from '~/constants/message'
 export const createPostController = async (req: Request<ParamsDictionary, any, PostRequestBody>, res: Response) => {
   const { user_id } = req.decode_authorization as TokenPayload
   const result = await postService.createPost(user_id, req.body)
+  console.log('result', result)
   return res.json({ message: POST_MESSAGES.POST_SUCCESS, result })
 }
 export const getPostDetailController = async (req: Request, res: Response) => {

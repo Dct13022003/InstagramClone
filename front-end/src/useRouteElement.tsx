@@ -1,9 +1,7 @@
 import Login from './pages/Login'
 import Register from './pages/Register'
 import { Navigate, Outlet, useRoutes } from 'react-router-dom'
-
 import ChatPage from './pages/Chat/ChatPage'
-
 import MessageList from './components/Chat/MessageList'
 import React, { useContext } from 'react'
 import { AppContext } from './context/app.context'

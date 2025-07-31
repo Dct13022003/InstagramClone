@@ -23,11 +23,14 @@ class PostService {
     return hashtagDocuments.map((hashtagDocument) => hashtagDocument._id)
   }
   async createPost(user_id: string, body: PostRequestBody) {
-    const mentionObjectIds = body.mentions.map((id) => new ObjectId(id))
+    let mentionObjectIds: ObjectId[] = []
+    if (body.hashtags.length > 0) {
+      mentionObjectIds = body.mentions.map((id) => new ObjectId(id))
+    }
     const hashtags = await this.checkAndCreateHashtag(body.hashtags)
     Post.create({
       caption: body.caption,
-      images: [],
+      images: body.imageUrl,
       hashtags: hashtags,
       mentions: mentionObjectIds,
       likes: body.likes,

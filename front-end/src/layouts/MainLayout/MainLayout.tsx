@@ -1,12 +1,14 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import AppSidebar from '../../components/App-sidebar'
-import { SidebarProvider, SidebarTrigger } from '../../components/ui/sidebar'
+import { SidebarProvider } from '../../components/ui/sidebar'
+import { useMemo } from 'react'
 
 export default function MainLayout() {
+  const pathname = useLocation().pathname
+  const defaultOpen = useMemo(() => !pathname.startsWith('/chat'), [])
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar />
-      <SidebarTrigger />
       <main className='flex-1 flex'>
         <Outlet />
       </main>
