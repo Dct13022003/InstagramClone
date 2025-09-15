@@ -2,8 +2,8 @@ import { Router } from 'express'
 import { createCommentController } from '~/controllers/comment.controller'
 import { createPostController, getNewFeedsController, getPostDetailController } from '~/controllers/post.controller'
 import { checkPageAndLimit } from '~/middlewares/common.middlewares'
-import { createPostValidator, postValidator } from '~/middlewares/post.middlewares'
-import { accessTokenValidator, verifyUserValidator } from '~/middlewares/user.middlewares'
+import { postValidator } from '~/middlewares/post.middlewares'
+import { accessTokenValidator } from '~/middlewares/user.middlewares'
 import { wrapAsync } from '~/utils/handler'
 const postsRouter = Router()
 /**
@@ -38,8 +38,8 @@ postsRouter.get('/', accessTokenValidator, checkPageAndLimit, wrapAsync(getNewFe
 postsRouter.post(
   '/:post_id/comments/',
   accessTokenValidator,
-  checkPageAndLimit,
-  postValidator,
+  // checkPageAndLimit,
+  // postValidator,
   wrapAsync(createCommentController)
 )
 export default postsRouter

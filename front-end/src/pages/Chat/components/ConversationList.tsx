@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Conversation } from '../../types/chat.type'
+import { Conversation } from '../../../types/chat.type'
 
 interface ConversationListProps {
   conversations: Conversation[]

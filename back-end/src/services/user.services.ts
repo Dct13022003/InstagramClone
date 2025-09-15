@@ -7,6 +7,8 @@ import dotenv from 'dotenv'
 import { ObjectId } from 'mongodb'
 import { Follow } from '~/models/follow.models'
 import { USER_MESSAGES } from '~/constants/message'
+import { Post } from '~/models/post.models'
+import { Comment } from '~/models/comment.models'
 dotenv.config()
 class UserService {
   private signAccessToken({ user_id, verify }: { user_id: string; verify: string }) {
@@ -141,14 +143,15 @@ class UserService {
     )
   }
 
-  async getProfile(user_id: string) {
+  async getProfile(user_name: string) {
+    const user_id = await User.findOne({ username: user_name }).select('_id')
     const user = await User.findById(user_id, {
       password: 0,
       email_verify_token: 0,
       forgot_password_token: 0
     })
-    const followingCount = await Follow.countDocuments({ follower: new ObjectId(user_id) })
-    const followerCount = await Follow.countDocuments({ following: new ObjectId(user_id) })
+    const followingCount = await Follow.countDocuments({ follower: user_id })
+    const followerCount = await Follow.countDocuments({ following: user_id })
     return { user, followingCount, followerCount }
   }
 
@@ -225,6 +228,47 @@ class UserService {
       }
     )
     return avatar_user
+  }
+  async getAllPostByUser(user_name: string, page: number, limit: number) {
+    const user = await User.findOne({ username: user_name }).select('_id')
+    if (!user) throw new Error('User not found')
+
+    const posts = await Post.find({ author: user._id })
+      .select('-__v -author -updatedAt -hashtags -mentions -likes') // bỏ likes nếu muốn
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .lean() // dùng lean() để trả về object thường (dễ map dữ liệu)
+
+    const totalPosts = await Post.countDocuments({ author: user._id })
+    const hasNextPage = page * limit < totalPosts
+
+    if (posts.length === 0) return { posts: [], hasNextPage: null }
+
+    // Lấy danh sách postId
+    const postIds = posts.map((p) => p._id)
+
+    // Đếm số comment cho từng post
+    const commentsCount = await Comment.aggregate([
+      { $match: { post: { $in: postIds } } }, // chỉ lấy comment của các post này
+      { $group: { _id: '$post', count: { $sum: 1 } } }
+    ])
+
+    // Map dữ liệu likesCount & commentsCount vào post
+    const postsWithCounts = posts.map((post) => {
+      const commentData = commentsCount.find((c) => String(c._id) === String(post._id))
+      return {
+        ...post,
+        likesCount: post.likes?.length || 0,
+        commentsCount: commentData ? commentData.count : 0
+      }
+    })
+
+    return {
+      posts: postsWithCounts,
+      hasNextPage,
+      nextPage: hasNextPage ? page + 1 : null
+    }
   }
 }
 const userService = new UserService()

@@ -1,24 +1,23 @@
 import { BookmarkIcon, CameraIcon, ContactIcon, Grid3x3Icon, Settings } from 'lucide-react'
 import { Button } from '../../components/ui/button'
-import { NavLink } from 'react-router-dom'
+import { NavLink, Outlet, useParams } from 'react-router-dom'
 import { useContext, useEffect, useRef } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-
 import { AppContext } from '../../context/app.context'
 import { User } from '../../types/user.type'
-import { getMe, uploadAvatar } from '../../apis/profile.api'
+import { getProfile, uploadAvatar } from '../../apis/profile.api'
 import { setProfileToLS } from '../../utils/auth'
-import { usePostModal } from '../../store/usePostModal.store'
 
 export default function Profile() {
   const { profile, setProfile } = useContext(AppContext)
-  const { open } = usePostModal()
+  const { username } = useParams()
+  console.log('Username in Posts:', username)
   const { isPending, mutateAsync } = useMutation({
     mutationFn: uploadAvatar
   })
   const { data: profileData } = useQuery<{ user: User; followerCount: number; followingCount: number }>({
-    queryKey: ['me'],
-    queryFn: getMe,
+    queryKey: ['profile', username],
+    queryFn: () => getProfile(username as string),
     staleTime: 1000 * 60 * 5
   })
 
@@ -53,7 +52,7 @@ export default function Profile() {
   console.log('Render count:', renderCount.current)
   return (
     <div className='w-full pt-8 py-8 md:mx-8'>
-      <div className='max-w-4xl mx-auto'>
+      <div className='max-w-5xl mx-auto'>
         <div className='flex flex-col md:flex-row items-center md:items-start gap-6'>
           <div className='flex-1 flex justify-center items-center relative h-48 overflow-hidden'>
             <div className='absolute top-2 left-1/2 -translate-x-1/2 -translate-y-1 z-1'>
@@ -132,7 +131,7 @@ export default function Profile() {
         </div>
         <div className='mt-6 md:border-b-0 border-t border-b-2'>
           <div className='grid grid-cols-3 md:flex justify-center md:space-x-20 text-sm text-gray-500  font-medium'>
-            <NavLink to='posts' className={({ isActive }) => (isActive ? 'tab-active border-t-2' : 'tab-inactive')}>
+            <NavLink end to='' className={({ isActive }) => (isActive ? 'tab-active border-t-2' : 'tab-inactive')}>
               <div className='border-black py-4 flex items-center justify-center md:gap-2 gap-0.5 '>
                 <Grid3x3Icon className='w-10 md:w-4' />
                 <span className='hidden md:inline'>BÀI VIẾT</span>
@@ -152,19 +151,7 @@ export default function Profile() {
             </NavLink>
           </div>
         </div>
-        <div className='flex justify-center items-center h-64 text-center text-gray-500 flex-col'>
-          <div className='w-14 h-14 border border-black rounded-full flex items-center justify-center'>
-            <CameraIcon />
-          </div>
-          <span
-            onClick={open}
-            role='button'
-            tabIndex={0}
-            className='text-blue-500 hover:text-black cursor-pointer text-base font-semibold'
-          >
-            Chia sẻ ảnh đầu tiên của bạn
-          </span>
-        </div>
+        <Outlet context={username} />
       </div>
     </div>
   )

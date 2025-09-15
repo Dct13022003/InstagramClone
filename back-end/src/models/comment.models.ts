@@ -14,7 +14,7 @@ const commentSchema = new Schema<IComment>(
     text: { type: String, require: true },
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     post_id: { type: Schema.Types.ObjectId, ref: ' Post', required: true },
-    parent_id: { type: Schema.Types.ObjectId, ref: 'Comment', required: true },
+    parent_id: { type: Schema.Types.ObjectId, ref: 'Comment', default: null },
     mentions: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }]
   },

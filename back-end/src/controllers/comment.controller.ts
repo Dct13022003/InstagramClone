@@ -11,13 +11,14 @@ export const createCommentController = async (
   res: Response
 ) => {
   const { user_id } = req.decode_authorization as TokenPayload
-  const result = await commentService.createComment(user_id, req.body)
+  const post_id = req.params.post_id
+  const result = await commentService.createComment(user_id, post_id, req.body)
   return res.json({ message: POST_MESSAGES.POST_SUCCESS, result })
 }
 export const getCommentController = async (req: Request<PostParam, any, any, Pagination>, res: Response) => {
   const post_id = req.params.post_id
-  const limit = Number(req.query.limit)
-  const page = Number(req.query.page)
-  const result = commentService.getAllCommentInPost({ post_id, limit, page })
-  return res.json(result)
+  const limit = Number(req.query.limit) || 2
+  const page = Number(req.query.page) || 1
+  const result = await commentService.getAllCommentInPost({ post_id, limit, page })
+  return res.json({ result })
 }

@@ -5,6 +5,7 @@ import {
   followController,
   forgotPasswordController,
   forgotPasswordVerifyController,
+  getAllUserPostController,
   getProfileController,
   loginController,
   refreshTokenController,
@@ -34,6 +35,7 @@ import { logoutController } from '~/controllers/user.controller'
 import { wrapAsync } from '~/utils/handler'
 import { filterMiddleware } from '~/middlewares/common.middlewares'
 import { UpdateProfile } from '~/models/request/user.request'
+import { get } from 'lodash'
 const userRouter = Router()
 /**
  * Description. Login route
@@ -110,7 +112,7 @@ userRouter.post('/reset-password', resetPasswordValidator, wrapAsync(resetPasswo
  * Method: GET
  * Headers: {Authorization: Bearer <access_token>}
  */
-userRouter.get('/me', accessTokenValidator, wrapAsync(getProfileController))
+userRouter.get('/:user_name', accessTokenValidator, wrapAsync(getProfileController))
 
 /**
  * Description. update profile
@@ -178,4 +180,13 @@ userRouter.post(
   // verifyUserValidator,
   wrapAsync(uploadAvatarController)
 )
+
+/**
+ * Description: My posts
+ * Route: /posts
+ * Method: GET
+ * Headers: {Authorization: Bearer <access_token>}
+ * Body: {page: number, limit: number,user_name:string}
+ */
+userRouter.get('/:user_name/posts', accessTokenValidator, wrapAsync(getAllUserPostController))
 export default userRouter

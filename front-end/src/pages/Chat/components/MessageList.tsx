@@ -1,13 +1,14 @@
 import { useOutletContext, useParams } from 'react-router-dom'
-import { Conversation, GetMessagesResponse, Message } from '../../types/chat.type'
-import { useMessages } from '../../hooks/useMessages'
 import MessageInput from './MessageInput'
 import { useContext, useEffect, useRef } from 'react'
 import { InfiniteData, useQueryClient } from '@tanstack/react-query'
-import { getSocket } from '../../utils/socket'
-import { AppContext } from '../../context/app.context'
 import InfiniteScroll from 'react-infinite-scroll-component'
-import { groupMessagesByTime } from '../../utils/time'
+import { Conversation, GetMessagesResponse, Message } from '../../../types/chat.type'
+import { useMessages } from '../../../hooks/useMessages'
+import { AppContext } from '../../../context/app.context'
+import { groupMessagesByTime } from '../../../utils/time'
+
+import { getSocket } from '../../../utils/socket'
 
 type OutletContextType = {
   currentUser: string

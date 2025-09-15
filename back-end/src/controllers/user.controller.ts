@@ -94,8 +94,8 @@ export const resetPasswordController = async (req: Request, res: Response) => {
 }
 
 export const getProfileController = async (req: Request, res: Response) => {
-  const { user_id } = req.decode_authorization as TokenPayload
-  const result = await userService.getProfile(user_id)
+  const { user_name } = req.params
+  const result = await userService.getProfile(user_name)
   return res.json({
     result
   })
@@ -147,6 +147,16 @@ export const uploadAvatarController = async (req: Request, res: Response) => {
   const result = await userService.updateProfile(user_id, { profilePicture: avatar[0].url })
   return res.json({
     message: USER_MESSAGES.UPLOAD_AVATAR_SUCCESS,
+    result
+  })
+}
+
+export const getAllUserPostController = async (req: Request, res: Response) => {
+  const { user_name } = req.params
+  const page = parseInt(req.query.page as string) || 1
+  const limit = parseInt(req.query.limit as string) || 6
+  const result = await userService.getAllPostByUser(user_name, page, limit)
+  return res.json({
     result
   })
 }

@@ -2,13 +2,16 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import { Navigate, Outlet, useRoutes } from 'react-router-dom'
 import ChatPage from './pages/Chat/ChatPage'
-import MessageList from './components/Chat/MessageList'
+
 import React, { useContext } from 'react'
 import { AppContext } from './context/app.context'
 import path from './constants/path'
 import MainLayout from './layouts/MainLayout'
 import Profile from './pages/Profile'
-import Post from './components/Post'
+import Posts from './pages/Profile/components/Posts'
+import Saves from './pages/Profile/components/Saves'
+import MessageList from './pages/Chat/components/MessageList'
+import DetailPost from './pages/DetailPost'
 
 function ProtectedRoute() {
   const { isAuthenticated } = useContext(AppContext)
@@ -41,19 +44,20 @@ export default function useRouteElement() {
               ]
             },
             {
-              path: path.profile,
+              path: '/:username',
               element: <Profile />,
               children: [
                 {
-                  // path: 'posts',
-                  // element: <Post />
-                }
+                  index: true,
+                  element: <Posts />
+                },
+                { path: 'saved', element: <Saves /> },
+                { path: 'tagged', element: <Saves /> }
               ]
             },
             {
-              path: '/posts',
-              element: <Post />,
-              children: [{}]
+              path: '/p/:postId',
+              element: <DetailPost />
             }
           ]
         }

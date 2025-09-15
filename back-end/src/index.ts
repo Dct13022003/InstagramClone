@@ -14,6 +14,7 @@ import { createServer } from 'http'
 import { Server } from 'socket.io'
 import conversationRouter from './routers/conversation.routers'
 import { Message } from './models/message.models'
+import commentsRouter from './routers/comment.routers'
 // import '~/utils/fake'
 
 dotenv.config({})
@@ -35,6 +36,7 @@ app.use('/likes', likeRouter)
 app.use('/posts', postsRouter)
 app.use('/medias', mediasRouter)
 app.use('/conversations', conversationRouter)
+app.use('/comments', commentsRouter)
 app.use(defaultErrorHandler)
 
 const users: { [key: string]: { socketid: string } } = {}

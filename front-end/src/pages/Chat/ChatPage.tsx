@@ -1,8 +1,9 @@
 import { useConversations } from '../../hooks/useMessages'
-import ConversationList from '../../components/Chat/ConversationList'
+
 import { Outlet, useParams } from 'react-router-dom'
 import { useContext } from 'react'
 import { AppContext } from '../../context/app.context'
+import ConversationList from './components/ConversationList'
 
 export default function ChatPage() {
   const { profile } = useContext(AppContext)
