@@ -8,8 +8,8 @@ export interface ILike extends Document {
 
 const likeSchema = new Schema<ILike>(
   {
-    user_id: { type: Types.ObjectId, required: true, ref: 'User' },
-    post_id: { type: Types.ObjectId, required: true, ref: 'Post' }
+    user_id: { type: Types.ObjectId, required: true, ref: 'User', unique: true },
+    post_id: { type: Types.ObjectId, required: true, ref: 'Post', unique: true }
   },
   { timestamps: true, collection: 'posts' }
 )

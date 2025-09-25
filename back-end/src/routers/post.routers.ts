@@ -42,4 +42,5 @@ postsRouter.post(
   // postValidator,
   wrapAsync(createCommentController)
 )
+
 export default postsRouter

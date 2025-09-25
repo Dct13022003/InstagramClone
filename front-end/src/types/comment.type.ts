@@ -6,8 +6,8 @@ export interface Comment {
   text: string
   author: User
   post_id: string | Post
-  parent_id: Comment | null
-  mentions: number
+  parent_id?: Comment | string
+  mentions: User[] | null
   likes: number
   replies?: number
   createdAt: string
@@ -19,4 +19,10 @@ export interface CommentForm {
   parentId?: string
   mentions?: string[]
   imageUrl?: string[]
+}
+
+export interface CommentResponse {
+  comments: (Comment & { isLiked: boolean })[]
+  hasNextPage: boolean | null
+  nextPage: number | null
 }

@@ -5,7 +5,8 @@ export interface IPost extends Document {
   author: ObjectId
   hashtags: ObjectId[]
   mentions: ObjectId[]
-  likes: ObjectId[]
+  likesCount: number
+  commentsCount: number
 }
 const postSchema = new Schema<IPost>(
   {
@@ -14,7 +15,8 @@ const postSchema = new Schema<IPost>(
     author: { type: Types.ObjectId, required: true, ref: 'User' },
     hashtags: [{ type: Types.ObjectId, ref: 'Hashtag' }],
     mentions: [{ type: Types.ObjectId, ref: 'User' }],
-    likes: [{ type: Types.ObjectId, ref: 'User' }]
+    likesCount: { type: Number, default: 0 },
+    commentsCount: { type: Number, default: 0 }
   },
   { timestamps: true, collection: 'posts' }
 )

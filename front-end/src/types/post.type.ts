@@ -14,6 +14,7 @@ export interface Post {
 export interface PostProfile extends Post {
   likesCount: number
   commentsCount: number
+  isLiked: boolean
 }
 export interface PostsPageProfile {
   posts: PostProfile[]

@@ -56,7 +56,7 @@ export default function useRouteElement() {
               ]
             },
             {
-              path: '/p/:postId',
+              path: '/:username/p/:postId',
               element: <DetailPost />
             }
           ]

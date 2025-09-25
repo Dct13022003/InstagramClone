@@ -5,8 +5,8 @@ export interface IComment extends Document {
   author: ObjectId
   post_id: ObjectId
   parent_id: ObjectId
-  mentions: string[]
-  likes: string[]
+  mentions: ObjectId[]
+  likes: ObjectId[]
 }
 
 const commentSchema = new Schema<IComment>(

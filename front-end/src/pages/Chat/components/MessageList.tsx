@@ -95,7 +95,6 @@ export default function MessageList() {
 
       {/* Messages area */}
       <div className='flex-1 overflow-y-auto bg-white py-2'>
-        <div className=' flex flex-col items-center bg-white overflow-y-auto p-4'>{/* Header user info */}</div>
         <div id='scrollableDiv' className='h-full w-full overflow-auto flex flex-col-reverse'>
           {/*Put the scroll bar always on the bottom*/}
           <InfiniteScroll

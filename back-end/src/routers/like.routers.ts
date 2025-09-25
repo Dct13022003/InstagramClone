@@ -5,13 +5,12 @@ import { wrapAsync } from '~/utils/handler'
 const likeRouter = Router()
 
 /**
- * Description. Bookmark route
- * Route: /
+ * Description. like post
+ * Route: /posts/:post_id
  * Method: POST
  * Headers: {Authorization: Bearer <access_token>}
- * Body: {refresh_token: string}
  */
-likeRouter.post('/', accessTokenValidator, wrapAsync(likeController))
+likeRouter.post('/posts/:post_id', accessTokenValidator, wrapAsync(likeController))
 
 /**
  * Description. unlike route

@@ -3,7 +3,7 @@ import { PostRequestBody } from '~/models/request/post.request'
 import { ObjectId } from 'mongodb'
 import { Hashtag } from '~/models/hashtag.models'
 import { followService } from './follow.services'
-import { profile } from 'console'
+import { Like } from '~/models/like.models'
 
 class PostService {
   async checkAndCreateHashtag(hashtags: string[]) {
@@ -34,12 +34,13 @@ class PostService {
       images: body.imageUrl,
       hashtags: hashtags,
       mentions: mentionObjectIds,
-      likes: body.likes,
+      likesCount: 0,
+      commentsCount: 0,
       author: new ObjectId(user_id)
     })
   }
 
-  async getPostDetail(post_id: string) {
+  async getPostDetail(post_id: string, user_id: string) {
     const post = await Post.aggregate([
       {
         $match: {
@@ -91,32 +92,6 @@ class PostService {
         }
       },
       {
-        $lookup: {
-          from: 'comments',
-          localField: '_id',
-          foreignField: 'post_id',
-          as: 'comments'
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'likes',
-          foreignField: '_id',
-          as: 'likes'
-        }
-      },
-      {
-        $addFields: {
-          likesCount: {
-            $size: '$likes'
-          },
-          commentsCount: {
-            $size: '$comments'
-          }
-        }
-      },
-      {
         $project: {
           author: {
             profilePicture: 1,
@@ -132,7 +107,8 @@ class PostService {
         }
       }
     ])
-    return post[0]
+    const isLiked = await Like.exists({ user_id, post_id })
+    return { ...post[0], isLiked: !!isLiked }
   }
 
   async getNewFeeds({ user_id, limit, page }: { user_id: string; limit: number; page: number }) {

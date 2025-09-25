@@ -12,7 +12,8 @@ export const createPostController = async (req: Request<ParamsDictionary, any, P
 }
 export const getPostDetailController = async (req: Request, res: Response) => {
   const post_id = req.params.post_id
-  const result = await postService.getPostDetail(post_id)
+  const { user_id } = req.decode_authorization as TokenPayload
+  const result = await postService.getPostDetail(post_id, user_id)
   return res.json({
     message: POST_MESSAGES.GET_POST_SUCCESS,
     result

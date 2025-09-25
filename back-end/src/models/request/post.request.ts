@@ -8,6 +8,7 @@ export interface PostRequestBody {
 
 export interface PostParam {
   post_id: string
+  comment_id: string
 }
 
 export interface Pagination {

@@ -1,64 +1,121 @@
-import { useQueryClient } from '@tanstack/react-query'
-import { useContext, useEffect } from 'react'
-import { AppContext } from '../../../context/app.context'
-import { Comment } from '../../../types/comment.type'
-import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar'
-import { HeartIcon } from 'lucide-react'
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Comment, CommentResponse } from '../../../types/comment.type'
+import InfiniteScroll from 'react-infinite-scroll-component'
+import { fetchComments, likeComment, unlikeComment } from '../../../apis/post.api'
+import CommentItem from './CommentItem'
 
-export default function ListComment({ postId }: { postId: string }) {
+export default function ListComment({
+  postId,
+  onReply
+}: {
+  postId: string
+  onReply?: ({ username, comment_id }: { username: string; comment_id: string }) => void
+}) {
   const queryClient = useQueryClient()
-  const comments = queryClient.getQueryData<Comment[]>(['comments', postId]) || []
-  console.log('ListComment render', comments)
-  const { socket } = useContext(AppContext)
-  useEffect(() => {
-    if (!socket) {
-      console.log('Không có socket')
-      return
-    }
-    socket.emit('join_post', postId)
+  const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ['comments', postId],
+    queryFn: ({ pageParam = 1 }) => fetchComments(postId as string, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.hasNextPage ? lastPage.nextPage : undefined)
+  })
 
-    socket.on('new_comment', (comment) => {
-      queryClient.setQueryData<Comment[]>(['comments', postId], (old = []) => {
-        // tránh trùng (nếu comment đã có do optimistic UI)
-        if (old.find((c) => c._id === comment._id)) return old
-        return [...old, comment]
+  const comments = data ? data.pages.flatMap((page) => page.comments) : []
+
+  const likeCommentMutation = useMutation({
+    mutationFn: ({ commentId }: { commentId: string; parentId?: string }) => likeComment(commentId),
+
+    onMutate: async ({ commentId, parentId }) => {
+      const queryKey = parentId ? ['replies', parentId] : ['comments', postId]
+
+      await queryClient.cancelQueries({ queryKey })
+      const prevData = queryClient.getQueryData<CommentResponse>(queryKey)
+
+      // update cache optimistic
+      queryClient.setQueryData(queryKey, (oldData: any) => {
+        if (!oldData) return oldData
+        const newPages = oldData.pages.map((page: any) => {
+          const newComments = page.comments.map((c: Comment) =>
+            c._id === commentId ? { ...c, isLiked: true, likes: c.likes + 1 } : c
+          )
+          return { ...page, comments: newComments }
+        })
+        return { ...oldData, pages: newPages }
       })
-    })
 
-    return () => {
-      socket.off('new_comment')
+      return { prevData, queryKey }
+    },
+
+    onError: (_err, _vars, context) => {
+      if (context?.prevData) {
+        queryClient.setQueryData(context.queryKey, context.prevData)
+      }
+    },
+
+    onSettled: (_data, _err, vars) => {
+      const queryKey = vars.parentId ? ['replies', vars.parentId] : ['comments', postId]
+      queryClient.invalidateQueries({ queryKey })
     }
-  }, [postId, queryClient, socket])
+  })
+
+  const unlikeCommentMutation = useMutation({
+    mutationFn: ({ commentId }: { commentId: string; parentId?: string }) => unlikeComment(commentId),
+    onMutate: async ({ commentId, parentId }) => {
+      const queryKey = parentId ? ['replies', parentId] : ['comments', postId]
+      await queryClient.cancelQueries({ queryKey })
+      const prevData = queryClient.getQueryData<CommentResponse>(queryKey)
+      queryClient.setQueryData(queryKey, (oldData: any) => {
+        if (!oldData) return oldData
+        const newPages = oldData.pages.map((page: any) => {
+          const newComments = page.comments.map((c: Comment) =>
+            c._id === commentId ? { ...c, isLiked: true, likes: c.likes - 1 } : c
+          )
+          return { ...page, comments: newComments }
+        })
+        return { ...oldData, pages: newPages }
+      })
+
+      return { prevData, queryKey }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prevData) {
+        queryClient.setQueryData(context.queryKey, context.prevData)
+      }
+    },
+
+    onSettled: (_data, _err, vars) => {
+      const queryKey = vars.parentId ? ['replies', vars.parentId] : ['comments', postId]
+      queryClient.invalidateQueries({ queryKey })
+    }
+  })
+
+  const handleLikeComment = ({ commentId, parentId }: { commentId: string; parentId?: string }) => {
+    likeCommentMutation.mutate({ commentId, parentId })
+  }
+
+  const handleUnlikeComment = ({ commentId, parentId }: { commentId: string; parentId?: string }) => {
+    unlikeCommentMutation.mutate({ commentId, parentId })
+  }
+
   return (
-    <div className='flex-1 px-4 overflow-y-auto text-sm w-full '>
-      {comments.map((c) => (
-        <div key={c._id} className='flex py-3 '>
-          <div className='pr-3 flex items-start'>
-            <Avatar className='my-6 w-10 h-10 '>
-              <AvatarImage className='object-cover' src={c.author.profilePicture} />
-              <AvatarFallback />
-            </Avatar>
-          </div>
-          <div className='flex flex-1 flex-col'>
-            <p>
-              <span className='font-semibold mr-2 text-base'>{c.author.username}</span>
-              <span className='text-gray-500 text-base'>{new Date(c.createdAt).toLocaleString()}</span>
-            </p>
-            <p>
-              <span className='text-base '>{c.text}</span>
-            </p>
-            <p className='mt-1 flex gap-4'>
-              {c.likes > 0 && <span className='text-sm text-gray-500'>{c.likes} lượt thích</span>}
-              <span className='text-sm text-gray-500'>trả lời</span>
-            </p>
-          </div>
-          <div className='pl-3 flex items-center'>
-            <button>
-              <HeartIcon className='text-gray-500 w-4.5 h-4.5' />
-            </button>
-          </div>
-        </div>
-      ))}
+    <div id='scrollableDiv' className='flex-1 overflow-y-auto px-4'>
+      <InfiniteScroll
+        dataLength={comments.length}
+        next={fetchNextPage}
+        hasMore={hasNextPage}
+        loader={<div className='text-center py-2 text-gray-500'>Đang tải...</div>}
+        scrollableTarget='scrollableDiv'
+        style={{ display: 'flex', flexDirection: 'column' }}
+      >
+        {comments.map((c) => (
+          <CommentItem
+            key={c._id}
+            comment={c}
+            onReply={onReply}
+            onLike={handleLikeComment}
+            onUnlike={handleUnlikeComment}
+          />
+        ))}
+      </InfiniteScroll>
     </div>
   )
 }

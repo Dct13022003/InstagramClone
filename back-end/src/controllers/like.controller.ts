@@ -7,7 +7,7 @@ import { likeService } from '~/services/like.services'
 
 export const likeController = async (req: Request<ParamsDictionary, any, likePostRequestBody>, res: Response) => {
   const { user_id } = req.decode_authorization as TokenPayload
-  const post_id = req.body.post_id
+  const post_id = req.params.post_id
   await likeService.createLike(user_id, post_id)
   res.status(201).json({
     message: LIKE_MESSAGES.LIKE_SUCCESS,

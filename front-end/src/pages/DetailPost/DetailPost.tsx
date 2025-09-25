@@ -1,134 +1,368 @@
-import { useParams } from 'react-router-dom'
-import { createComment, fetchComments, getPostDetail } from '../../apis/post.api'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { NavLink, useParams } from 'react-router-dom'
+import { createComment, getPostDetail, likePost, unlikePost } from '../../apis/post.api'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
-import { useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import ListComment from './components/ListComment'
-import { Comment } from '../../types/comment.type'
+import { Comment, CommentResponse } from '../../types/comment.type'
 import { formatInstagramTime } from '../../utils/time'
+import EmojiPicker from 'emoji-picker-react'
+import { BookmarkIcon, HeartIcon, MessageCircleIcon, MessageCircleMoreIcon, SmileIcon } from 'lucide-react'
+import { Tooltip } from '../../components/ui/tooltip'
+import { TooltipContent, TooltipTrigger } from '@radix-ui/react-tooltip'
+import { AppContext } from '../../context/app.context'
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '../../components/ui/carousel'
+import { userPosts } from '../../apis/profile.api'
 
 export default function DetailPost() {
+  const { profile } = useContext(AppContext)
+  const [content, setContent] = useState('')
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [reply, setReplyTo] = useState<string | null>(null)
+  const emojiRef = useRef<HTMLDivElement | null>(null)
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { postId } = useParams()
   const queryClient = useQueryClient()
-  const { data, isLoading } = useQuery({
+  const { username } = useParams()
+
+  const { data: postDetail, isLoading } = useQuery({
     queryKey: ['post', postId],
     queryFn: () => getPostDetail(postId as string),
     enabled: !!postId
   })
-  const commentsQuery = useQuery({
-    queryKey: ['comments', postId],
-    queryFn: () => fetchComments(postId as string)
+
+  const { data: relatePosts } = useInfiniteQuery({
+    queryKey: ['posts', username, 'infinite'],
+    queryFn: ({ pageParam = 1 }) => userPosts(username as string, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.hasNextPage ? lastPage.nextPage : undefined)
   })
+
+  const posts = relatePosts?.pages.flatMap((page) => page.posts) ?? []
+
   const commentMutation = useMutation({
-    mutationFn: (content: string) => createComment(postId as string, content),
+    mutationFn: (content: string) => createComment({ postId: postId as string, parent_id: reply, text: content }),
+
     onMutate: async (content: string) => {
       const tempId = 'temp-' + Date.now()
 
-      await queryClient.cancelQueries({ queryKey: ['comments', postId] })
+      // xác định queryKey tùy vào gốc hay reply
+      const queryKey = reply ? ['replies', reply] : ['comments', postId]
 
-      const prev = queryClient.getQueryData<Comment[]>(['comments', postId])
+      await queryClient.cancelQueries({ queryKey })
 
-      // Construct optimistic comment object
+      const prevData = queryClient.getQueryData<CommentResponse>(queryKey)
+
       const optimisticComment: Comment = {
         _id: tempId,
         text: content,
-        parent_id: null,
-        mentions: 0,
+        mentions: null,
         likes: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        // status: 'pending',
-        // Add other required fields with default or placeholder values if needed
         author: {
-          username: 'CurrentUser', // Replace with actual current user data
-          profilePicture: '' // or a default avatar
+          username: profile?.username || 'you',
+          profilePicture: profile?.profilePicture || '/default-avatar.png'
         },
-        post_id: postId as string
+        post_id: postId as string,
+        parent_id: reply || null
       }
 
-      queryClient.setQueryData<Comment[]>(['comments', postId], (old = []) => [...old, optimisticComment])
+      queryClient.setQueryData(queryKey, (oldData: any) => {
+        if (!oldData) {
+          return {
+            pages: [{ comments: [optimisticComment], hasNextPage: true, nextPage: 2 }],
+            pageParams: [1]
+          }
+        }
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: any, i: number) =>
+            i === 0 ? { ...page, comments: [...page.comments, optimisticComment] } : page
+          )
+        }
+      })
 
-      return { prev }
+      return { prevData, queryKey }
     },
+
     onError: (err, newComment, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(['comments', postId], ctx.prev)
+      if (ctx?.prevData) {
+        queryClient.setQueryData(ctx.queryKey, ctx.prevData)
+      }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments', postId] })
+
+    onSettled: (data, error, variables, ctx) => {
+      if (ctx?.queryKey) {
+        queryClient.invalidateQueries({ queryKey: ctx.queryKey })
+      }
     }
   })
 
-  const [input, setInput] = useState('')
+  const likePostMutation = useMutation({
+    mutationFn: () => likePost(postId as string),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['post', postId] })
+      const prevData = queryClient.getQueryData(['post', postId])
+      queryClient.setQueryData(['post', postId], (oldData: any) => {
+        if (!oldData) return oldData
+        return {
+          ...oldData,
+          isLiked: true,
+          likesCount: oldData.likesCount + 1
+        }
+      })
+      return { prevData }
+    },
+    onError: (err, newComment, ctx) => {
+      if (ctx?.prevData) queryClient.setQueryData(['post', postId], ctx.prevData)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['post', postId] })
+    }
+  })
 
-  if (isLoading) return <p>Loading comments...</p>
+  const unlikePostMutation = useMutation({
+    mutationFn: () => unlikePost(postId as string),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['post', postId] })
+      const prevData = queryClient.getQueryData(['post', postId])
+      queryClient.setQueryData(['post', postId], (oldData: any) => {
+        if (!oldData) return oldData
+        return {
+          ...oldData,
+          isLiked: false,
+          likesCount: oldData.likesCount - 1
+        }
+      })
+      return { prevData }
+    },
+    onError: (err, newComment, ctx) => {
+      if (ctx?.prevData) queryClient.setQueryData(['post', postId], ctx.prevData)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['post', postId] })
+    }
+  })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim()) return
-    commentMutation.mutate(input)
-    setInput('')
+    if (!content.trim()) return
+    commentMutation.mutate(content.trim())
+    setContent('')
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+    }
   }
+
+  const handleEmojiClick = (emojiData: any) => {
+    setContent((prev) => prev + emojiData.emoji)
+  }
+
+  const handleReply = ({ username, comment_id }: { username: string; comment_id: string }) => {
+    setReplyTo(comment_id)
+    setContent(`@${username} `)
+    textareaRef.current?.focus()
+  }
+
+  const handleLikePost = () => {
+    likePostMutation.mutate()
+  }
+
+  const handleUnlikePost = () => {
+    unlikePostMutation.mutate()
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        emojiRef.current &&
+        !emojiRef.current.contains(event.target as Node) &&
+        !buttonRef.current?.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  const handleInput = () => {
+    const el = textareaRef.current
+    if (!el) return
+
+    el.style.height = 'auto'
+    const newHeight = Math.min(el.scrollHeight, 4 * 24)
+    el.style.height = newHeight + 'px'
+  }
+
+  if (isLoading) return <div>Loading...</div>
   return (
-    <div className='mx-[30.5px] pt-[32px] px-[20px] w-full'>
-      <div className='flex max-w-4xl mx-auto bg-white border border-gray-300 rounded-lg overflow-hidden'>
-        {/* Left: Image */}
-        <div className='flex-1 bg-black flex items-center justify-center'>
-          <img src={data?.images[0]} alt='post' className='object-contain max-h-[600px]' />
-        </div>
-
-        {/* Right: Content */}
-        <div className='w-[350px] flex flex-col border-l border-gray-300'>
-          {/* Header */}
-          <div className='flex items-center px-4 py-3 border-b border-gray-200 h-[60px] gap-3'>
-            <Avatar className='my-6 w-10 h-10'>
-              <AvatarImage className='object-cover ' src={data?.author.profilePicture} />
-              <AvatarFallback />
-            </Avatar>
-            <span className='font-semibold'>{data?.author.username}</span>
-          </div>
-
-          {/* Caption */}
-          {data?.caption != '' && (
-            <div className='px-4 py-3 text-sm'>
-              <span className='font-semibold mr-2'>{data?.caption}</span>
-              {data?.caption}
-            </div>
-          )}
-
-          {/* Comments */}
-          <ListComment postId={postId as string} />
-
-          {/* Footer */}
-          <div className='px-4 py-3 border-t border-gray-200 text-sm'>
-            <p className='font-semibold text-base'>{data?.likesCount} lượt thích</p>
-            <p className='text-xs text-gray-500 mt-1'>
-              {data?.createdAt ? formatInstagramTime(data.createdAt.toString()) : ''}
-            </p>
-          </div>
-
-          {/* Input */}
-          <div className='px-4 py-3 border-t border-gray-200 relative'>
-            <form onSubmit={handleSubmit} className='flex gap-2'>
-              <input
-                type='text'
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder='Nhắn tin...'
-                className='w-full flex-1 border-0 px-4 py-2 focus:outline-none text-xl '
-              />
-              {/* <button type='submit' className='px-4 py-1 bg-blue-500 text-white rounded'>
-                Send
-              </button> */}
-              {input.trim() && (
-                <button
-                  type='submit'
-                  className='ml-2 bg-white text-blue-600  text-l focus:outline-none absolute right-10 top-1/2 -translate-y-1/2'
-                >
-                  Send
-                </button>
+    <div className='mx-[30.5px] pt-[32px] px-[20px]'>
+      <div className=' w-full'>
+        <div className='flex max-w-4xl mx-auto bg-white border border-gray-300 rounded-lg overflow-hidden'>
+          {/* Left: Image */}
+          <div className='flex-1 relative'>
+            {/* <img src={data?.images[0]} alt='post' className='object-contain max-h-full max-w-full' /> */}
+            <Carousel className='w-full h-full flex items-center'>
+              <CarouselContent className='h-full '>
+                {postDetail?.images.map((src, idx) => (
+                  <CarouselItem key={idx} className='h-full flex items-center justify-center'>
+                    <img src={src} className='w-full h-full object-contain' />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              {postDetail?.images.length > 1 && (
+                <>
+                  <CarouselPrevious className='absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white hover:bg-black/70 rounded-full p-2' />
+                  <CarouselNext className='absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white hover:bg-black/70 rounded-full p-2' />
+                </>
               )}
-            </form>
+            </Carousel>
           </div>
+
+          {/* Right: Content */}
+          <div className='w-[350px] h-screen flex flex-col border-l border-gray-300'>
+            {/* Header */}
+            <div className='flex items-center px-4 py-3 border-b border-gray-200 h-[60px] gap-3'>
+              <Avatar className='my-6 w-10 h-10'>
+                <AvatarImage className='object-cover ' src={postDetail?.author.profilePicture} />
+                <AvatarFallback />
+              </Avatar>
+              <span className='font-semibold'>{postDetail?.author.username}</span>
+            </div>
+
+            {/* Caption */}
+            {postDetail?.caption != '' && (
+              <div className='px-4 py-3 text-sm'>
+                <span className='font-semibold mr-2'>{postDetail?.caption}</span>
+                {postDetail?.caption}
+              </div>
+            )}
+
+            {/* Comments */}
+            <ListComment postId={postId as string} onReply={handleReply} />
+
+            {/* Footer */}
+
+            <div className='px-4 pt-3 border-t border-gray-200 text-sm '>
+              <div className='flex items-center justify-between mb-1'>
+                <div className='flex gap-4'>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      {postDetail?.isLiked ? (
+                        <button onClick={handleUnlikePost}>
+                          <HeartIcon className='hover:text-gray-500 fill-red-500 text-red-500' />
+                        </button>
+                      ) : (
+                        <button onClick={handleLikePost}>
+                          <HeartIcon className='hover:text-gray-500' />
+                        </button>
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>thích</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <button
+                    onClick={() => {
+                      textareaRef.current?.focus()
+                    }}
+                  >
+                    <MessageCircleIcon className='hover:text-gray-500' />
+                  </button>
+                </div>
+                <div>
+                  <button>
+                    <BookmarkIcon className='hover:text-gray-500' />
+                  </button>
+                </div>
+              </div>
+              <p className='font-semibold text-base'>{postDetail?.likesCount} lượt thích</p>
+              <p className='text-xs text-gray-500 mt-1'>
+                {postDetail?.createdAt ? formatInstagramTime(postDetail.createdAt.toString()) : ''}
+              </p>
+            </div>
+
+            {/* Input */}
+            <div className='flex px-4 pt-3 items-center w-full '>
+              <Avatar className='my-6 w-10 h-10 '>
+                <AvatarImage className='object-cover ' src={postDetail?.author.profilePicture} />
+                <AvatarFallback />
+              </Avatar>
+              <div className=' py-3  border-gray-200 relative flex-1 '>
+                <form onSubmit={handleSubmit} className='flex gap-2'>
+                  <textarea
+                    ref={textareaRef}
+                    onInput={handleInput}
+                    rows={1}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder='Bình luận...'
+                    className=' border-0 px-4 py-2 focus:outline-none text-base resize-none'
+                  />
+                  {content.trim() && (
+                    <button
+                      type='submit'
+                      className='ml-2 bg-white text-blue-600  text-l focus:outline-none absolute right-0 top-1/2 -translate-y-1/2'
+                    >
+                      Đăng
+                    </button>
+                  )}
+                </form>
+              </div>
+
+              <button
+                ref={buttonRef}
+                type='button'
+                onClick={() => setShowEmojiPicker((prev) => !prev)}
+                className='ml-2 relative'
+              >
+                <SmileIcon className='w-7 h-7 text-gray-600 hover:text-gray-300' />
+              </button>
+              {showEmojiPicker && (
+                <div ref={emojiRef} className='absolute bottom-12 right-7 top-15 z-50 '>
+                  <EmojiPicker onEmojiClick={handleEmojiClick} />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className='border-t border-gray-500 max-w-full mt-12'></div>
+      <div className='mt-12'>
+        <div className='mb-5'>
+          <p className='text-gray-500 font-medium'>
+            Thêm các bài viết từ{' '}
+            <NavLink to={`/${username}`} className='text-black hover:underline'>
+              {username}
+            </NavLink>
+          </p>
+        </div>
+        <div className='grid grid-cols-3 gap-2 md:gap-[3px]'>
+          {posts.map((post) => (
+            <NavLink to={`/${username}/p/${post._id}`} className='w-full h-full block'>
+              <div key={post._id} className='w-full aspect-[3/4] bg-gray-200 relative cursor-pointer group '>
+                <img src={post.images[0]} alt={post.caption} className='w-full h-full object-cover' />
+
+                <div className='absolute inset-0 bg-black/0 group-hover:bg-black/50 transition flex items-center justify-center'>
+                  <div className='flex gap-5 text-white font-semibold text-lg opacity-0 group-hover:opacity-100 transition'>
+                    <div className='flex items-center gap-1'>
+                      <HeartIcon /> <span> {post.likesCount}</span>
+                    </div>
+                    <div className='flex items-center gap-1'>
+                      <MessageCircleMoreIcon /> <span>{post.commentsCount}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </NavLink>
+          ))}
         </div>
       </div>
     </div>

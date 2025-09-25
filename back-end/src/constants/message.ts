@@ -71,4 +71,11 @@ export const LIKE_MESSAGES = {
 export const MEDIA_MESSAGES = {
   UPLOAD_IMAGE_SUCCESS: 'Upload image success',
   UPLOAD_VIDEO_SUCCESS: 'Upload video success'
-}
+} as const
+
+export const COMMENT_MESSAGES = {
+  COMMENT_SUCCESS: 'Comment success',
+  GET_COMMENT_SUCCESS: 'Get comment success',
+  LIKE_COMMENT_SUCCESS: 'Like comment success',
+  UNLIKE_COMMENT_SUCCESS: 'Unlike comment success'
+} as const

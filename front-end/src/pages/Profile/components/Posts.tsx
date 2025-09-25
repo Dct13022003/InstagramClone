@@ -10,7 +10,7 @@ export default function Posts() {
   const username = useOutletContext<string>()
 
   const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
-    queryKey: ['posts', username],
+    queryKey: ['posts', username, 'infinite'],
     queryFn: ({ pageParam = 1 }) => userPosts(username, pageParam),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => (lastPage.hasNextPage ? lastPage.nextPage : undefined)
@@ -42,7 +42,7 @@ export default function Posts() {
       >
         <div className='grid grid-cols-3 gap-1 md:gap-[3px]'>
           {posts.map((post) => (
-            <NavLink to={`/p/${post._id}`} className='w-full h-full block'>
+            <NavLink to={`/${username}/p/${post._id}`} className='w-full h-full block'>
               <div key={post._id} className='w-full aspect-[3/4] bg-gray-200 relative cursor-pointer group '>
                 <img src={post.images[0]} alt={post.caption} className='w-full h-full object-cover' />
 
