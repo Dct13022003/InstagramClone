@@ -35,7 +35,6 @@ import { logoutController } from '~/controllers/user.controller'
 import { wrapAsync } from '~/utils/handler'
 import { filterMiddleware } from '~/middlewares/common.middlewares'
 import { UpdateProfile } from '~/models/request/user.request'
-import { get } from 'lodash'
 const userRouter = Router()
 /**
  * Description. Login route
@@ -132,12 +131,17 @@ userRouter.patch(
 
 /**
  * Description. follow someone
- * Route: /follow
+ * Route: /follow/:user_id_follow
  * Method: POST
  * Headers: {Authorization: Bearer <access_token>}
- * Body: {user_id_follow}
  */
-userRouter.post('/follow', accessTokenValidator, verifyUserValidator, followValidator, wrapAsync(followController))
+userRouter.post(
+  '/follow/:user_id_follow',
+  accessTokenValidator,
+  // verifyUserValidator,
+  followValidator,
+  wrapAsync(followController)
+)
 
 /**
  * Description. unfollow someone
@@ -148,7 +152,7 @@ userRouter.post('/follow', accessTokenValidator, verifyUserValidator, followVali
 userRouter.delete(
   '/follow/:user_id_unfollow',
   accessTokenValidator,
-  verifyUserValidator,
+  // verifyUserValidator,
   unFollowValidator,
   wrapAsync(unFollowController)
 )

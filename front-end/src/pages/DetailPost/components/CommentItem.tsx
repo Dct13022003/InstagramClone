@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avat
 import { Comment } from '../../../types/comment.type'
 import ListCommentReplies from './ListCommentReplies'
 import { useState } from 'react'
+import { NavLink } from 'react-router-dom'
 
 type CommentItemProps = {
   comment: Comment & { isLiked: boolean }
@@ -30,12 +31,14 @@ export default function CommentItem({ comment: c, onReply, onLike, onUnlike, isC
         {/* Nội dung comment */}
         <div className='flex flex-1 flex-col'>
           <p>
-            <span className='font-semibold mr-2 text-base'>{c.author.username}</span>
+            <NavLink to={`/${c.author.username}`} className='font-semibold mr-2 text-base'>
+              {c.author.username}
+            </NavLink>
             <span className='text-gray-500 text-base'>
               {c?.createdAt ? formatInstagramTime(c.createdAt.toString()) : ''}
             </span>
           </p>
-          <p className='text-base whitespace-pre-wrap break-words'>{c.text}</p>
+          <p className='text-base whitespace-pre-wrap break-all'>{c.text}</p>
           <p className='mt-1 flex gap-4'>
             {c.likes > 0 && <span className='text-sm text-gray-500'>{c.likes} lượt thích</span>}
             <button

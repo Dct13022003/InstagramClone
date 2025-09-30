@@ -2,7 +2,6 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import { Navigate, Outlet, useRoutes } from 'react-router-dom'
 import ChatPage from './pages/Chat/ChatPage'
-
 import React, { useContext } from 'react'
 import { AppContext } from './context/app.context'
 import path from './constants/path'
@@ -12,6 +11,7 @@ import Posts from './pages/Profile/components/Posts'
 import Saves from './pages/Profile/components/Saves'
 import MessageList from './pages/Chat/components/MessageList'
 import DetailPost from './pages/DetailPost'
+import Home from './pages/Home'
 
 function ProtectedRoute() {
   const { isAuthenticated } = useContext(AppContext)
@@ -33,6 +33,10 @@ export default function useRouteElement() {
           path: '',
           element: React.createElement(MainLayout),
           children: [
+            {
+              path: path.home,
+              element: <Home />
+            },
             {
               path: path.chat,
               element: <ChatPage />,

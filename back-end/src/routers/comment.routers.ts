@@ -41,7 +41,7 @@ commentsRouter.post('/:comment_id/like', accessTokenValidator, wrapAsync(likeCom
  * Headers: {Authorization: Bearer <access_token>}
  *
  */
-commentsRouter.post('/:comment_id/unlike', accessTokenValidator, wrapAsync(unlikeCommentController))
+commentsRouter.delete('/:comment_id/unlike', accessTokenValidator, wrapAsync(unlikeCommentController))
 /**
  * Description. Get comment reply
  * Route: /:comment_id/unlike

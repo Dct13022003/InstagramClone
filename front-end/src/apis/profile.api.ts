@@ -1,17 +1,8 @@
-import { PostsPageProfile } from '../types/post.type'
-import { User } from '../types/user.type'
+import { ListPostDetail } from '../types/post.type'
+import { ProfileResponse, User } from '../types/user.type'
 import { SuccessResponse } from '../types/utils.type'
 import http from '../utils/http'
 
-// interface BodyUpdateProfile extends Omit<User, '_id' | 'roles' | 'createdAt' | 'updatedAt' | 'email'> {
-//   password?: string
-//   newPassword?: string
-// }
-export type ProfileResponse = {
-  user: User
-  followerCount: number
-  followingCount: number
-}
 export const getProfile = async (username: string): Promise<ProfileResponse> => {
   const { data } = await http.get<SuccessResponse<ProfileResponse>>(`users/${username}`)
   return data.result
@@ -29,7 +20,7 @@ export const uploadAvatar = async (body: FormData) => {
 }
 
 export const userPosts = async (username: string, page: number, limit = 6) => {
-  const { data } = await http.get<SuccessResponse<PostsPageProfile>>(`users/${username}/posts`, {
+  const { data } = await http.get<SuccessResponse<ListPostDetail>>(`users/${username}/posts`, {
     params: {
       limit,
       page

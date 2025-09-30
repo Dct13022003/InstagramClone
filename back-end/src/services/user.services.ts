@@ -6,7 +6,6 @@ import { signToken } from '~/utils/jwt'
 import dotenv from 'dotenv'
 import { ObjectId } from 'mongodb'
 import { Follow } from '~/models/follow.models'
-import { USER_MESSAGES } from '~/constants/message'
 import { Post } from '~/models/post.models'
 import { Comment } from '~/models/comment.models'
 dotenv.config()
@@ -109,7 +108,7 @@ class UserService {
         { new: true, runValidators: true }
       )
     ])
-    const [access_token, refresh_token] = token
+    const [, refresh_token] = token
     await RefreshToken.create({ user_id: new ObjectId(user_id), token: refresh_token })
   }
   async resendEmailVerify(user_id: string) {
@@ -143,16 +142,25 @@ class UserService {
     )
   }
 
-  async getProfile(user_name: string) {
-    const user_id = await User.findOne({ username: user_name }).select('_id')
-    const user = await User.findById(user_id, {
-      password: 0,
-      email_verify_token: 0,
-      forgot_password_token: 0
-    })
-    const followingCount = await Follow.countDocuments({ follower: user_id })
-    const followerCount = await Follow.countDocuments({ following: user_id })
-    return { user, followingCount, followerCount }
+  async getProfile(username: string, currentUserId: string) {
+    const user = await User.findOne({ username }, { password: 0, email_verify_token: 0, forgot_password_token: 0 })
+
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    const [followingCount, followerCount, isFollowed] = await Promise.all([
+      Follow.countDocuments({ follower: user._id }),
+      Follow.countDocuments({ following: user._id }),
+      Follow.exists({ follower: currentUserId, following: user._id }) // check follow
+    ])
+
+    return {
+      user,
+      followingCount,
+      followerCount,
+      isFollowed: Boolean(isFollowed) // convert sang true/false
+    }
   }
 
   async updateProfile(user_id: string, payload: any) {
@@ -173,30 +181,6 @@ class UserService {
       }
     )
     return user
-  }
-
-  async follow(user_id: string, user_id_follow: string) {
-    const user = await Follow.findOne({ follower: new ObjectId(user_id), following: new ObjectId(user_id_follow) })
-    if (user === null) {
-      await Follow.create({
-        follower: new ObjectId(user_id),
-        following: new ObjectId(user_id_follow)
-      })
-      return { message: USER_MESSAGES.FOLLOW_SUCCESS }
-    }
-    return { message: USER_MESSAGES.FOLLOWED }
-  }
-
-  async unFollow(user_id: string, user_id_unfollow: string) {
-    const user = await Follow.findOne({ follower: new ObjectId(user_id), following: new ObjectId(user_id_unfollow) })
-    if (user !== null) {
-      await Follow.deleteOne({
-        follower: new ObjectId(user_id),
-        following: new ObjectId(user_id_unfollow)
-      })
-      return { message: USER_MESSAGES.UNFOLLOW_SUCCESS }
-    }
-    return { message: USER_MESSAGES.UNFOLLOW_FAIL }
   }
 
   async changePassword(password: string, user_id: string) {
@@ -238,34 +222,15 @@ class UserService {
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 })
-      .lean() // dùng lean() để trả về object thường (dễ map dữ liệu)
+      .lean()
 
     const totalPosts = await Post.countDocuments({ author: user._id })
     const hasNextPage = page * limit < totalPosts
 
     if (posts.length === 0) return { posts: [], hasNextPage: null }
 
-    // Lấy danh sách postId
-    const postIds = posts.map((p) => p._id)
-
-    // Đếm số comment cho từng post
-    const commentsCount = await Comment.aggregate([
-      { $match: { post: { $in: postIds } } }, // chỉ lấy comment của các post này
-      { $group: { _id: '$post', count: { $sum: 1 } } }
-    ])
-
-    // Map dữ liệu likesCount & commentsCount vào post
-    const postsWithCounts = posts.map((post) => {
-      const commentData = commentsCount.find((c) => String(c._id) === String(post._id))
-      return {
-        ...post,
-        likesCount: post.likes?.length || 0,
-        commentsCount: commentData ? commentData.count : 0
-      }
-    })
-
     return {
-      posts: postsWithCounts,
+      posts: posts,
       hasNextPage,
       nextPage: hasNextPage ? page + 1 : null
     }

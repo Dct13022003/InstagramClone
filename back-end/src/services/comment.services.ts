@@ -6,13 +6,14 @@ import { CommentRequestBody } from '~/models/request/comment.request'
 
 class CommentService {
   async createComment(user_id: string, postId: string, body: CommentRequestBody) {
+    const parentId = body.parent_id ? new ObjectId(body.parent_id) : null
     await Comment.create({
       post_id: new ObjectId(postId),
       text: body.text,
       mentions: body.mentions,
       likes: [],
       author: new ObjectId(user_id),
-      parent_id: new ObjectId(body.parent_id)
+      parent_id: parentId
     })
     await Post.updateOne({ _id: new ObjectId(postId) }, { $inc: { commentsCount: 1 } })
   }

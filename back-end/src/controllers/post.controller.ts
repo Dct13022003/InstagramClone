@@ -23,12 +23,8 @@ export const getNewFeedsController = async (req: Request<ParamsDictionary, any, 
   const { user_id } = req.decode_authorization as TokenPayload
   const limit = Number(req.query.limit)
   const page = Number(req.query.page)
-  const { posts, total } = await postService.getNewFeeds({ user_id, limit, page })
+  const result = await postService.getNewFeeds({ user_id, limit, page })
   return res.json({
-    user_id,
-    limit,
-    page,
-    posts,
-    total
+    result
   })
 }

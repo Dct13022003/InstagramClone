@@ -97,25 +97,36 @@ export default function ListComment({
   }
 
   return (
-    <div id='scrollableDiv' className='flex-1 overflow-y-auto px-4'>
-      <InfiniteScroll
-        dataLength={comments.length}
-        next={fetchNextPage}
-        hasMore={hasNextPage}
-        loader={<div className='text-center py-2 text-gray-500'>Đang tải...</div>}
-        scrollableTarget='scrollableDiv'
-        style={{ display: 'flex', flexDirection: 'column' }}
-      >
-        {comments.map((c) => (
-          <CommentItem
-            key={c._id}
-            comment={c}
-            onReply={onReply}
-            onLike={handleLikeComment}
-            onUnlike={handleUnlikeComment}
-          />
-        ))}
-      </InfiniteScroll>
-    </div>
+    <>
+      {comments.length === 0 ? (
+        <div className='flex-1 flex items-center justify-center py-2 text-gray-500'>
+          <div className='text-center'>
+            <p className='text-2xl font-bold text-black'>Chưa có bình luận nào.</p>
+            <p>Bắt đầu trò chuyện</p>
+          </div>
+        </div>
+      ) : (
+        <div id='scrollableDiv' className='flex-1 overflow-y-auto px-4'>
+          <InfiniteScroll
+            dataLength={comments.length}
+            next={fetchNextPage}
+            hasMore={hasNextPage}
+            loader={<div className='text-center py-2 text-gray-500'>Đang tải...</div>}
+            scrollableTarget='scrollableDiv'
+            style={{ display: 'flex', flexDirection: 'column' }}
+          >
+            {comments.map((c) => (
+              <CommentItem
+                key={c._id}
+                comment={c}
+                onReply={onReply}
+                onLike={handleLikeComment}
+                onUnlike={handleUnlikeComment}
+              />
+            ))}
+          </InfiniteScroll>
+        </div>
+      )}
+    </>
   )
 }

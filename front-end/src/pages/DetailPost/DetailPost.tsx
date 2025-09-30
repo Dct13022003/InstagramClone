@@ -207,7 +207,6 @@ export default function DetailPost() {
         <div className='flex max-w-4xl mx-auto bg-white border border-gray-300 rounded-lg overflow-hidden'>
           {/* Left: Image */}
           <div className='flex-1 relative'>
-            {/* <img src={data?.images[0]} alt='post' className='object-contain max-h-full max-w-full' /> */}
             <Carousel className='w-full h-full flex items-center'>
               <CarouselContent className='h-full '>
                 {postDetail?.images.map((src, idx) => (
@@ -233,14 +232,38 @@ export default function DetailPost() {
                 <AvatarImage className='object-cover ' src={postDetail?.author.profilePicture} />
                 <AvatarFallback />
               </Avatar>
-              <span className='font-semibold'>{postDetail?.author.username}</span>
+              <NavLink to={`/${username}`} className='font-semibold'>
+                {postDetail?.author.username}
+              </NavLink>
+              {username != postDetail?.author.username && (
+                <div>
+                  <div className=''></div>
+                  <button className='text-blue-600 font-semibold hover:underline'>Theo dõi</button>
+                </div>
+              )}
             </div>
 
             {/* Caption */}
             {postDetail?.caption != '' && (
-              <div className='px-4 py-3 text-sm'>
-                <span className='font-semibold mr-2'>{postDetail?.caption}</span>
-                {postDetail?.caption}
+              <div className='flex py-3 px-4'>
+                {/* Avatar */}
+                <div className='pr-3 flex items-start'>
+                  <Avatar className='my-1 w-10 h-10'>
+                    <AvatarImage className='object-cover' src={postDetail?.author.profilePicture} />
+                    <AvatarFallback />
+                  </Avatar>
+                </div>
+
+                {/* Nội dung comment */}
+                <div className='flex flex-1 flex-col'>
+                  <p>
+                    <span className='font-semibold mr-2 text-base'>{postDetail?.author.username}</span>
+                    <span className='text-gray-500 text-base'>
+                      {postDetail?.createdAt ? formatInstagramTime(postDetail.createdAt.toString()) : ''}
+                    </span>
+                  </p>
+                  <p className='text-base whitespace-pre-wrap break-all'>{postDetail?.caption}</p>
+                </div>
               </div>
             )}
 

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 
 export default function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [searchOpen, setSearchOpen] = useState(false)
+  const [, setSearchOpen] = useState(false)
 
   const handleSearchClick = () => {
     setSearchOpen(true)
@@ -29,9 +29,7 @@ export default function MainLayout() {
     <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <SidebarAutoCollapse />
       <AppSidebar />
-      <main className='flex-1 flex'>
-        <Outlet />
-      </main>
+      <Outlet />
     </SidebarProvider>
   )
 }

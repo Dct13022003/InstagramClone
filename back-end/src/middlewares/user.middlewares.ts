@@ -511,7 +511,7 @@ export const followValidator = validate(
         }
       }
     },
-    ['body']
+    ['params']
   )
 )
 export const unFollowValidator = validate(

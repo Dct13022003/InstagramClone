@@ -10,3 +10,9 @@ export interface User {
   email_verify_token?: string
   forgot_password_token?: string
 }
+export interface ProfileResponse {
+  user: User
+  followerCount: number
+  followingCount: number
+  isFollowed: boolean
+}

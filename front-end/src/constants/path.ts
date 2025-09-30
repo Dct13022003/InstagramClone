@@ -3,6 +3,6 @@ const path = {
   login: '/login',
   register: '/register',
   profile: '/profile',
-  chat: '/chat',
+  chat: '/chat'
 }
 export default path

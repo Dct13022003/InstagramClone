@@ -128,12 +128,17 @@ class PostService {
           from: 'users',
           localField: 'author',
           foreignField: '_id',
-          as: 'user'
+          as: 'author'
         }
       },
       {
-        $unwind: {
-          path: '$user'
+        $unwind: '$author'
+      },
+      {
+        $project: {
+          'author.password': 0,
+          'author.email_verify_token': 0,
+          'author.forgot_password_token': 0
         }
       },
       {
@@ -209,13 +214,18 @@ class PostService {
         $limit: limit
       }
     ])
+    if (posts.length === 0) return { comments: [], hasNextPage: null }
     const total = await Post.countDocuments({
       author: {
         $in: ids
       }
     })
-
-    return { posts, total }
+    const hasNextPage = page * limit < total
+    return {
+      posts,
+      hasNextPage,
+      nextPage: hasNextPage ? page + 1 : null
+    }
   }
 }
 export const postService = new PostService()

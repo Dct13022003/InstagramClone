@@ -11,13 +11,13 @@ export interface Post {
   createdAt: Date
   updatedAt: Date
 }
-export interface PostProfile extends Post {
+export interface PostDetail extends Post {
   likesCount: number
   commentsCount: number
   isLiked: boolean
 }
-export interface PostsPageProfile {
-  posts: PostProfile[]
+export interface ListPostDetail {
+  posts: PostDetail[]
   hasNextPage: boolean
   nextPage?: number | null
 }
