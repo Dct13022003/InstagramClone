@@ -69,7 +69,7 @@ export default function DetailPost() {
         parent_id: reply || null
       }
 
-      queryClient.setQueryData(queryKey, (oldData: any) => {
+      queryClient.setQueryData(queryKey, (oldData: CommentResponse) => {
         if (!oldData) {
           return {
             pages: [{ comments: [optimisticComment], hasNextPage: true, nextPage: 2 }],
@@ -318,7 +318,7 @@ export default function DetailPost() {
                 <AvatarImage className='object-cover ' src={postDetail?.author.profilePicture} />
                 <AvatarFallback />
               </Avatar>
-              <div className=' py-3  border-gray-200 relative flex-1 '>
+              <div className=' py-3 border-gray-200 relative flex-1 '>
                 <form onSubmit={handleSubmit} className='flex gap-2'>
                   <textarea
                     ref={textareaRef}

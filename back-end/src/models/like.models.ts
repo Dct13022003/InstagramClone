@@ -8,10 +8,11 @@ export interface ILike extends Document {
 
 const likeSchema = new Schema<ILike>(
   {
-    user_id: { type: Types.ObjectId, required: true, ref: 'User', unique: true },
-    post_id: { type: Types.ObjectId, required: true, ref: 'Post', unique: true }
+    user_id: { type: Types.ObjectId, required: true, ref: 'User' },
+    post_id: { type: Types.ObjectId, required: true, ref: 'Post' }
   },
-  { timestamps: true, collection: 'posts' }
+  { timestamps: true }
 )
+likeSchema.index({ user_id: 1, post_id: 1 }, { unique: true })
 
 export const Like = mongoose.model<ILike>('Like', likeSchema)

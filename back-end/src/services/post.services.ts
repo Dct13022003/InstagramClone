@@ -1,4 +1,4 @@
-import { IPost, Post } from '~/models/post.models'
+import { Post } from '~/models/post.models'
 import { PostRequestBody } from '~/models/request/post.request'
 import { ObjectId } from 'mongodb'
 import { Hashtag } from '~/models/hashtag.models'
@@ -115,12 +115,10 @@ class PostService {
     const following_user_ids = await followService.getAllFollowing(user_id)
     const ids = following_user_ids.map((item) => item.following)
     ids.push(new ObjectId(user_id))
-    const posts = await Post.aggregate<IPost>([
+    const posts = await Post.aggregate([
       {
         $match: {
-          author: {
-            $in: ids
-          }
+          author: { $in: ids }
         }
       },
       {
@@ -133,13 +131,6 @@ class PostService {
       },
       {
         $unwind: '$author'
-      },
-      {
-        $project: {
-          'author.password': 0,
-          'author.email_verify_token': 0,
-          'author.forgot_password_token': 0
-        }
       },
       {
         $lookup: {
@@ -165,8 +156,7 @@ class PostService {
               as: 'mention',
               in: {
                 _id: '$$mention._id',
-                username: '$$mention.username',
-                email: '$$mention.email'
+                username: '$$mention.username'
               }
             }
           }
@@ -174,46 +164,48 @@ class PostService {
       },
       {
         $lookup: {
-          from: 'comments',
-          localField: '_id',
-          foreignField: 'post_id',
-          as: 'comments'
+          from: 'likes',
+          let: { postId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [{ $eq: ['$post_id', '$$postId'] }, { $eq: ['$user_id', new ObjectId(user_id)] }]
+                }
+              }
+            }
+          ],
+          as: 'liked'
         }
       },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'likes',
-          foreignField: '_id',
-          as: 'likes'
-        }
-      },
+
       {
         $addFields: {
-          likes: {
-            $size: '$likes'
-          },
-          comments: {
-            $size: '$comments'
-          }
+          isLiked: { $gt: [{ $size: '$liked' }, 0] }
         }
       },
       {
         $project: {
-          user: {
-            password: 0,
-            email_verify_token: 0,
-            forgot_password_token: 0
-          }
+          author: { username: 1, profilePicture: 1 },
+          caption: 1,
+          images: 1,
+          hashtags: 1,
+          mentions: 1,
+          likesCount: 1,
+          commentsCount: 1,
+          createdAt: 1,
+          isLiked: 1
         }
       },
       {
-        $skip: limit * (page - 1)
+        $sort: {
+          createdAt: -1
+        }
       },
-      {
-        $limit: limit
-      }
+      { $skip: limit * (page - 1) },
+      { $limit: limit }
     ])
+
     if (posts.length === 0) return { comments: [], hasNextPage: null }
     const total = await Post.countDocuments({
       author: {

@@ -22,15 +22,12 @@ export default function Profile() {
     queryFn: () => getProfile(username as string)
   })
 
-  const { isPending: isFollowPending, mutate: mutateFollow } = useMutation({
+  const { mutate: mutateFollow } = useMutation({
     mutationFn: followUser,
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ['profile', username] })
 
-      // Lấy dữ liệu cũ để rollback nếu lỗi
       const prevProfile = queryClient.getQueryData<ProfileResponse>(['profile', username])
-
-      // Optimistic update
       if (prevProfile) {
         queryClient.setQueryData(['profile', username], {
           ...prevProfile,
@@ -50,7 +47,7 @@ export default function Profile() {
     }
   })
 
-  const { isPending: isUnFollowPending, mutate: mutateUnFollow } = useMutation({
+  const { mutate: mutateUnFollow } = useMutation({
     mutationFn: unfollowUser,
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ['profile', username] })
@@ -113,7 +110,11 @@ export default function Profile() {
             <>
               <div className='flex-1 flex justify-center items-center relative h-48 overflow-hidden'>
                 <div className=' w-42 h-42 rounded-full overflow-hidden group'>
-                  <img src={profile?.profilePicture} alt='avatar' className='w-full h-full object-cover transition' />
+                  <img
+                    src={profileData?.user.profilePicture}
+                    alt='avatar'
+                    className='w-full h-full object-cover transition'
+                  />
                 </div>
               </div>
               <div className='flex-2 space-y-5 text-center md:text-left'>

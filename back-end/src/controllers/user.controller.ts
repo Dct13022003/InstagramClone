@@ -3,8 +3,8 @@ import { httpStatus } from '~/constants/httpStatus'
 import { USER_MESSAGES } from '~/constants/message'
 import { TokenPayload } from '~/models/request/user.request'
 import { User, IUser } from '~/models/user.models'
-import { followService } from '~/services/follow.services'
 import { mediaService } from '~/services/media.services'
+import { searchService } from '~/services/search.services'
 import userService from '~/services/user.services'
 
 export const registerController = async (req: Request, res: Response) => {
@@ -110,19 +110,6 @@ export const updateProfileController = async (req: Request, res: Response) => {
   res.json({ message: USER_MESSAGES.UPDATE_PROFILE_SUCCESS, result })
 }
 
-export const followController = async (req: Request, res: Response) => {
-  const { user_id } = req.decode_authorization as TokenPayload
-  const { user_id_follow } = req.params
-  const result = await followService.follow(user_id, user_id_follow)
-  return res.json({ result })
-}
-
-export const unFollowController = async (req: Request, res: Response) => {
-  const { user_id } = req.decode_authorization as TokenPayload
-  const { user_id_unfollow } = req.params
-  const result = await followService.unFollow(user_id, user_id_unfollow)
-  return res.json({ result })
-}
 export const changePasswordController = async (req: Request, res: Response) => {
   const { password } = req.body
   const { user_id } = req.decode_authorization as TokenPayload

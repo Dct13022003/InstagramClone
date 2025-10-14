@@ -1,32 +1,22 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import AppSidebar from '../../components/App-sidebar'
 import { SidebarProvider, useSidebar } from '../../components/ui/sidebar'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 export default function MainLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [, setSearchOpen] = useState(false)
-
-  const handleSearchClick = () => {
-    setSearchOpen(true)
-    setSidebarOpen(false) // Thu gọn Sidebar khi mở Search
-  }
-
-  const handleCloseSearch = () => {
-    setSearchOpen(false)
-    setSidebarOpen(true) // Mở lại Sidebar khi đóng Search
-  }
   function SidebarAutoCollapse() {
     const { setOpen } = useSidebar()
     const pathname = useLocation().pathname
     useEffect(() => {
-      setOpen(!pathname.startsWith('/chat'))
+      if (pathname.startsWith('/chat')) {
+        setOpen(false)
+      }
     }, [pathname, setOpen])
 
     return null
   }
   return (
-    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
+    <SidebarProvider>
       <SidebarAutoCollapse />
       <AppSidebar />
       <Outlet />

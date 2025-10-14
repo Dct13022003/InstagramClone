@@ -235,6 +235,7 @@ class UserService {
       nextPage: hasNextPage ? page + 1 : null
     }
   }
+  
 }
 const userService = new UserService()
 export default userService

@@ -2,7 +2,6 @@ import { Router } from 'express'
 import {
   changePasswordController,
   emailVerifyController,
-  followController,
   forgotPasswordController,
   forgotPasswordVerifyController,
   getAllUserPostController,
@@ -12,7 +11,6 @@ import {
   registerController,
   resendEmailVerifyController,
   resetPasswordController,
-  unFollowController,
   updateProfileController,
   uploadAvatarController
 } from '~/controllers/user.controller'
@@ -35,6 +33,7 @@ import { logoutController } from '~/controllers/user.controller'
 import { wrapAsync } from '~/utils/handler'
 import { filterMiddleware } from '~/middlewares/common.middlewares'
 import { UpdateProfile } from '~/models/request/user.request'
+import { followController, suggestFollowController, unFollowController } from '~/controllers/follow.controllers'
 const userRouter = Router()
 /**
  * Description. Login route
@@ -193,4 +192,12 @@ userRouter.post(
  * Body: {page: number, limit: number,user_name:string}
  */
 userRouter.get('/:user_name/posts', accessTokenValidator, wrapAsync(getAllUserPostController))
+/**
+ * Description: Suggest follow
+ * Route: /suggestions
+ * Method: GET
+ * Headers: {Authorization: Bearer <access_token>}
+ */
+userRouter.get('/follow/suggestions', accessTokenValidator, wrapAsync(suggestFollowController))
+
 export default userRouter

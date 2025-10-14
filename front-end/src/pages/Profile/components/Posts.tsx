@@ -16,8 +16,9 @@ export default function Posts() {
     getNextPageParam: (lastPage) => (lastPage.hasNextPage ? lastPage.nextPage : undefined)
   })
   const posts = data?.pages.flatMap((page) => page.posts) ?? []
+  console.log(posts.length)
 
-  return posts.length < 0 ? (
+  return posts.length < 1 ? (
     <div className='flex justify-center items-center h-64 text-center text-gray-500 flex-col'>
       <div className='w-14 h-14 border border-black rounded-full flex items-center justify-center'>
         <CameraIcon />
@@ -33,13 +34,7 @@ export default function Posts() {
     </div>
   ) : (
     <>
-      <InfiniteScroll
-        dataLength={posts.length}
-        next={fetchNextPage}
-        hasMore={hasNextPage}
-        loader={<p>Đang tải...</p>}
-        endMessage={<p className='text-center'>Hết bài viết</p>}
-      >
+      <InfiniteScroll dataLength={posts.length} next={fetchNextPage} hasMore={hasNextPage} loader={<p>Đang tải...</p>}>
         <div className='grid grid-cols-3 gap-1 md:gap-[3px]'>
           {posts.map((post) => (
             <NavLink to={`/${username}/p/${post._id}`} className='w-full h-full block'>

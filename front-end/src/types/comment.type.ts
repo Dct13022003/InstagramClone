@@ -7,8 +7,8 @@ export interface Comment {
   author: User
   post_id: string | Post
   parent_id?: Comment | string
-  mentions: User[] | null
-  likes: number
+  mentions?: User[] | null
+  likes?: number
   replies?: number
   createdAt: string
   updatedAt?: string

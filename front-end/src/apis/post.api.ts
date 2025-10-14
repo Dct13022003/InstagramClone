@@ -1,4 +1,4 @@
-import { CommentResponse } from '../types/comment.type'
+import { Comment, CommentResponse } from '../types/comment.type'
 import { ListPostDetail, PostDetail } from '../types/post.type'
 import { SuccessResponse } from '../types/utils.type'
 import http from '../utils/http'
@@ -30,8 +30,11 @@ export const createComment = async ({
   postId: string
   parent_id: string | null
   text: string
-}): Promise<void> => {
-  const response = await http.post<SuccessResponse<void>>(`${API_URL}/${postId}/comments`, { parent_id, text: content })
+}): Promise<Comment> => {
+  const response = await http.post<SuccessResponse<Comment>>(`${API_URL}/${postId}/comments`, {
+    parent_id,
+    text: content
+  })
   return response.data.result
 }
 export const fetchComments = async (postId: string, pageParam: number): Promise<CommentResponse> => {
