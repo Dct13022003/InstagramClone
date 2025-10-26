@@ -59,13 +59,27 @@ io.on('connection', (socket) => {
     console.log('user disconnected', user_id, socket.id)
     delete users[user_id]
   })
+
+  socket.on('join-conversation', (conversationId) => {
+    console.log('User joining conversation:', conversationId)
+    socket.join(conversationId)
+  })
+
+  socket.on('leave-conversation', (conversationId) => {
+    socket.leave(conversationId)
+  })
+
   socket.on('send-message', async (msg) => {
-    const { conversation, senderId, receiverId } = msg
+    const { conversation, senderId } = msg
     const resend_msg = await Message.create(msg)
     io.to(users[senderId].socketid).emit('resend-message', resend_msg)
-    if (users[receiverId]) socket.to(users[receiverId].socketid).emit('new-message', resend_msg)
-    console.log('message', resend_msg)
-    // Lưu tin nhắn vào cơ sở dữ liệu
+    socket.to(conversation).emit('new-message', resend_msg)
+  })
+
+  socket.on('typing', (data) => {
+    const { roomId } = data
+    console.log('Typing event in conversation:', roomId)
+    socket.to(roomId).emit('display_typing', { ...data })
   })
 })
 httpServer.listen(PORT, () => {

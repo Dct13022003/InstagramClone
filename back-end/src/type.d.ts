@@ -1,4 +1,3 @@
-import { Request } from 'express'
 import { IUser } from '~/models/user.models'
 import { TokenPayload } from './models/request/user.request'
 import { IPost } from './models/post.models'

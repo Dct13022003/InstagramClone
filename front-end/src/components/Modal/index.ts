@@ -1,3 +1,3 @@
-import { Modal } from './Modal'
+import { ModalCreatePost } from './ModalCreatePost'
 
-export default Modal
+export default ModalCreatePost

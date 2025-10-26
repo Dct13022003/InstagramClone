@@ -1,12 +1,12 @@
 import { CameraIcon, HeartIcon, MessageCircleMoreIcon } from 'lucide-react'
-import { usePostModal } from '../../../store/usePostModal.store'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { userPosts } from '../../../apis/profile.api'
 import { NavLink, useOutletContext } from 'react-router-dom'
 import InfiniteScroll from 'react-infinite-scroll-component'
+import { usePostModalCreatePost } from '../../../store/useCreatePostModal.store'
 
 export default function Posts() {
-  const { open } = usePostModal()
+  const { open } = usePostModalCreatePost()
   const username = useOutletContext<string>()
 
   const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({

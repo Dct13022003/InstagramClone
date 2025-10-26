@@ -1,13 +1,12 @@
 import { useOutletContext, useParams } from 'react-router-dom'
 import MessageInput from './MessageInput'
-import { useContext, useEffect, useRef } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { InfiniteData, useQueryClient } from '@tanstack/react-query'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { Conversation, GetMessagesResponse, Message } from '../../../types/chat.type'
 import { useMessages } from '../../../hooks/useMessages'
 import { AppContext } from '../../../context/app.context'
 import { groupMessagesByTime } from '../../../utils/time'
-
 import { getSocket } from '../../../utils/socket'
 
 type OutletContextType = {
@@ -15,27 +14,36 @@ type OutletContextType = {
   conversations: Conversation[]
 }
 
+type TypingUser = {
+  _id: string
+  profilePicture: string
+  profileUsername: string
+}
+
 export default function MessageList() {
+  const { profile } = useContext(AppContext)
   const { conversationId } = useParams()
   const { currentUser, conversations } = useOutletContext<OutletContextType>()
   const { data, fetchNextPage } = useMessages(conversationId || '')
   const { socket } = useContext(AppContext)
+  const [isTypingUsers, setTypingUsers] = useState<TypingUser[]>([])
   const bottomRef = useRef<any>(null)
   const queryClient = useQueryClient()
-  console.log('data:', data)
   const messages = data?.pages.flatMap((page) => page.messages) ?? []
   const messagesToRender = data ? groupMessagesByTime([...messages].reverse()).reverse() : []
   console.log('messagesToRender:', messagesToRender)
   const hasMore = data?.pages[data.pages.length - 1]?.hasNextPage ?? false
+
   useEffect(() => {
     bottomRef.current.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
   useEffect(() => {
     if (!socket) {
       console.log('Không có socket')
       return
     }
-
+    socket.emit('join-conversation', conversationId)
     const handleIncomingMessage = (msg: Message) => {
       if (msg.conversation === conversationId) {
         queryClient.setQueryData(['messages', conversationId], (old: InfiniteData<GetMessagesResponse> | undefined) => {
@@ -60,8 +68,42 @@ export default function MessageList() {
     return () => {
       socket.off('resend-message', handleIncomingMessage)
       socket.off('new-message', handleIncomingMessage)
+      socket.emit('leave-conversation', conversationId)
     }
   }, [socket, conversationId, queryClient])
+
+  useEffect(() => {
+    if (!socket) return
+
+    const handleDisplayTyping = ({
+      senderUser,
+      isTyping,
+      roomId
+    }: {
+      senderUser: TypingUser
+      isTyping: boolean
+      roomId: string
+    }) => {
+      if (roomId === conversationId && senderUser._id !== currentUser) {
+        setTypingUsers((prev) => {
+          if (isTyping) {
+            const exists = prev.some((u) => u._id === senderUser._id)
+            if (!exists) {
+              return [...prev, senderUser]
+            }
+            return prev
+          } else {
+            return prev.filter((u) => u._id !== senderUser._id)
+          }
+        })
+      }
+    }
+
+    socket.on('display_typing', handleDisplayTyping)
+    return () => {
+      socket.off('display_typing', handleDisplayTyping)
+    }
+  }, [socket, conversationId])
 
   const handleSendMessage = (content: string) => {
     if (!conversationId) return
@@ -79,10 +121,22 @@ export default function MessageList() {
       }
       const socket = getSocket()
       if (!socket) return
-      socket.emit('send-message', msg) // gửi trực tiếp tới server
+      socket.emit('send-message', msg)
     }
   }
 
+  const handleTyping = (isTyping: boolean) => {
+    if (!socket || !currentUser || !conversationId) return
+    socket.emit('typing', {
+      roomId: conversationId,
+      senderUser: {
+        _id: currentUser,
+        profilePicture: profile?.profilePicture,
+        profileUsername: profile?.username
+      },
+      isTyping
+    })
+  }
   return (
     <div className='flex flex-col h-full'>
       {/* Header */}
@@ -115,29 +169,26 @@ export default function MessageList() {
                     </div>
                   )
                 } else {
-                  // Assuming item has a 'message' property for message type
                   const message = item.message as Message
                   const isCurrentUser = message.senderId === currentUser
                   return (
-                    <div key={message._id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-1`}>
-                      <div
-                        className={`rounded-lg px-4 py-2 max-w-xs ${
-                          isCurrentUser ? 'bg-blue-500 text-white mr-5' : 'bg-gray-100 text-gray-900 ml-5'
-                        }`}
-                      >
-                        {message.content}
+                    <>
+                      <div key={message._id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-1`}>
+                        <div
+                          className={`rounded-lg px-4 py-2 max-w-xs ${
+                            isCurrentUser ? 'bg-blue-500 text-white mr-5' : 'bg-gray-100 text-gray-900 ml-5'
+                          }`}
+                        >
+                          {message.content}
+                        </div>
                       </div>
-                    </div>
+                    </>
                   )
                 }
               })}
 
             <div className='flex flex-col items-center my-9'>
-              <img
-                src='https://i.imgur.com/6VBx3io.png' // thay bằng ảnh thật
-                alt='avatar'
-                className='w-32 h-32 rounded-full object-cover'
-              />
+              <img src='https://i.imgur.com/6VBx3io.png' alt='avatar' className='w-32 h-32 rounded-full object-cover' />
               <h1 className='text-xl font-semibold mt-4'>Phan Thành Lộc</h1>
               <p className='text-gray-500'>loccc27 · Instagram</p>
               <button className='mt-3 px-4 py-2 bg-white text-black rounded-lg font-medium hover:bg-gray-200 transition'>
@@ -146,11 +197,17 @@ export default function MessageList() {
             </div>
           </InfiniteScroll>
         </div>
-
+        {isTypingUsers.length > 0 && (
+          <div className='flex justify-start mb-1'>
+            <div className='rounded-lg px-4 py-2 max-w-xs bg-gray-100 text-gray-900 ml-5 italic'>
+              Đang nhập tin nhắn...
+            </div>
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 
-      <MessageInput onSend={handleSendMessage} />
+      <MessageInput onTypingChange={handleTyping} onSend={handleSendMessage} />
     </div>
   )
 }

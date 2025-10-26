@@ -1,5 +1,4 @@
-import { Calendar, ChevronUp, Home, Inbox, Search, Settings, User2 } from 'lucide-react'
-
+import { BadgePlus, ChevronUp, Film, Heart, Home, Search, User2 } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -16,55 +15,66 @@ import { Collapsible, CollapsibleTrigger } from '../ui/collapsible'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useRef, useState } from 'react'
 import { SIDEBAR_WIDTH, SIDEBAR_WIDTH_ICON } from '../ui/sidebar'
-import SearchOpen from '../../layouts/MainLayout/component/searchOpen'
+import SearchOpen from '../../layouts/MainLayout/component/SearchOpen'
+import { Explore, Message } from '../Icons/Icons'
+import { usePostModalCreatePost } from '../../store/useCreatePostModal.store'
 
 const items = [
   {
-    title: 'Home',
+    title: 'Trang chủ',
     url: '/',
     icon: Home,
     isActive: true
   },
   {
-    title: 'Inbox',
-    url: '/chat',
-    icon: Inbox,
-    isActive: false
-  },
-  {
-    title: 'Calendar',
-    url: '#',
-    icon: Calendar,
-    isActive: false
-  },
-  {
-    title: 'Search',
+    title: 'Tìm kiếm',
     url: '#',
     icon: Search,
     isActive: false
   },
   {
-    title: 'Settings',
+    title: 'Khám phá',
     url: '#',
-    icon: Settings,
+    icon: Explore,
+    isActive: false
+  },
+  {
+    title: 'Reels',
+    url: '/',
+    icon: Film,
+    isActive: false
+  },
+  {
+    title: 'Tin nhắn',
+    url: '/chat',
+    icon: Message,
+    isActive: false
+  },
+  {
+    title: 'Thông báo',
+    url: '#',
+    icon: Heart,
+    isActive: true
+  },
+  {
+    title: 'Tạo',
+    url: '#',
+    icon: BadgePlus,
     isActive: true
   }
 ]
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [searchOpen, setSearchOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const { open, setOpen } = useSidebar()
+  const { open: openModal } = usePostModalCreatePost()
   const pathname = useLocation().pathname
-
   const handleSearchClick = () => {
     if (searchOpen) {
       if (pathname.startsWith('/chat')) {
-        setSearchOpen(false)
-        return
-      }
+        setOpen(false)
+      } else setOpen(true)
       setSearchOpen(false)
-      setOpen(true)
     } else {
       setSearchOpen(true)
       setOpen(false)
@@ -86,7 +96,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <Collapsible key={item.title} asChild defaultOpen={item.isActive} className='group/collapsible'>
                   <SidebarMenuItem className='h-1/8 flex items-center '>
                     <CollapsibleTrigger asChild>
-                      {item.title === 'Search' ? (
+                      {item.title === 'Tìm kiếm' ? (
                         <SidebarMenuButton
                           tooltip={item.title}
                           className='w-full h-12 group-data-[collapsible=icon]:size-12!'
@@ -108,7 +118,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           onClick={() => {
                             if (open === false) {
                               setSearchOpen(false)
-                              setTimeout(() => setOpen(true), 300)
+                            }
+                            if (item.title === 'Tạo') {
+                              openModal()
                             }
                           }}
                         >
@@ -153,7 +165,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-      <SearchOpen searchOpen={searchOpen} open={open}  />
+      <SearchOpen searchOpen={searchOpen} open={open} />
     </div>
   )
 }

@@ -1,6 +1,5 @@
-import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { useContext, useRef, useState } from 'react'
-import { usePostModal } from '../../store/usePostModal.store'
 import { ArrowLeft, ImagePlay, XIcon } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '../ui/carousel'
@@ -9,9 +8,10 @@ import { AppContext } from '../../context/app.context'
 import { createPost } from '../../apis/post.api'
 import { useMutation } from '@tanstack/react-query'
 import { uploadImages } from '../../apis/media.api'
+import { usePostModalCreatePost } from '../../store/useCreatePostModal.store'
 
-export function Modal() {
-  const { isOpen, close, images, setImages, reset } = usePostModal()
+export function ModalCreatePost() {
+  const { isOpen, close, images, setImages, reset } = usePostModalCreatePost()
   const [caption, setCaption] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [previews, setPreviews] = useState<string[]>([])

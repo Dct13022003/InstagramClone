@@ -34,24 +34,22 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Kết nối socket khi đã đăng nhập
   useEffect(() => {
-    if (isAuthenticated && !socket) {
-      const socket: Socket = connectSocket(profile?._id as string)
-      socket.on('connect', () => {
-        console.log('✅ Socket connected')
-      })
-      setSocket(socket)
+    if (isAuthenticated && profile?._id && !socket) {
+      const newSocket = connectSocket(profile._id)
+      newSocket.on('connect', () => console.log('✅ Socket connected'))
+      newSocket.on('disconnect', () => console.log('❌ Socket disconnected'))
+      setSocket(newSocket)
+
       return () => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        socket && disconnectSocket()
+        newSocket.disconnect()
       }
     }
 
-    // Nếu logout thì ngắt kết nối
     if (!isAuthenticated && socket) {
-      disconnectSocket()
+      socket.disconnect()
       setSocket(null)
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, profile?._id])
 
   return (
     <AppContext.Provider

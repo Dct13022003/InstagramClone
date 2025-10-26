@@ -14,7 +14,8 @@ import { AppContext } from '../../context/app.context'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '../../components/ui/carousel'
 import { userPosts } from '../../apis/profile.api'
 
-export default function DetailPost() {
+export default function DetailPost({ layout = 'full' }: { layout?: 'full' | 'modal' }) {
+  const isModal = layout === 'modal'
   const { profile } = useContext(AppContext)
   const [content, setContent] = useState('')
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -26,7 +27,7 @@ export default function DetailPost() {
   const queryClient = useQueryClient()
   const { username } = useParams()
 
-  const { data: postDetail, isLoading } = useQuery({
+  const { data: postDetail } = useQuery({
     queryKey: ['post', postId],
     queryFn: () => getPostDetail(postId as string),
     enabled: !!postId
@@ -200,22 +201,21 @@ export default function DetailPost() {
     el.style.height = newHeight + 'px'
   }
 
-  if (isLoading) return <div>Loading...</div>
   return (
-    <div className='mx-[30.5px] pt-[32px] px-[20px]'>
-      <div className=' w-full'>
-        <div className='flex max-w-4xl mx-auto bg-white border border-gray-300 rounded-lg overflow-hidden'>
+    <div className={`${isModal ? 'w-full' : 'mx-[30.5px] pt-[32px] px-[20px]'} `}>
+      <div className={`${isModal ? 'h-[90vh]' : 'h-screen'}`}>
+        <div className={`flex h-full max-w-4xl mx-auto bg-white border border-gray-300 rounded-lg overflow-hidden`}>
           {/* Left: Image */}
-          <div className='flex-1 relative'>
-            <Carousel className='w-full h-full flex items-center'>
-              <CarouselContent className='h-full '>
+          <div className='flex-1 h-full relative flex items-center justify-center'>
+            <Carousel className='h-full flex items-center'>
+              <CarouselContent className='h-full'>
                 {postDetail?.images.map((src, idx) => (
-                  <CarouselItem key={idx} className='h-full flex items-center justify-center'>
+                  <CarouselItem key={idx} className='flex h-full items-center justify-center'>
                     <img src={src} className='w-full h-full object-contain' />
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              {postDetail?.images.length > 1 && (
+              {(postDetail?.images?.length ?? 0) > 1 && (
                 <>
                   <CarouselPrevious className='absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white hover:bg-black/70 rounded-full p-2' />
                   <CarouselNext className='absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white hover:bg-black/70 rounded-full p-2' />
@@ -225,8 +225,7 @@ export default function DetailPost() {
           </div>
 
           {/* Right: Content */}
-          <div className='w-[350px] h-screen flex flex-col border-l border-gray-300'>
-            {/* Header */}
+          <div className={`${isModal ? 'w-[500px]' : 'w-[350px]'}  h-full flex flex-col border-l border-gray-300`}>
             <div className='flex items-center px-4 py-3 border-b border-gray-200 h-[60px] gap-3'>
               <Avatar className='my-6 w-10 h-10'>
                 <AvatarImage className='object-cover ' src={postDetail?.author.profilePicture} />
@@ -243,34 +242,7 @@ export default function DetailPost() {
               )}
             </div>
 
-            {/* Caption */}
-            {postDetail?.caption != '' && (
-              <div className='flex py-3 px-4'>
-                {/* Avatar */}
-                <div className='pr-3 flex items-start'>
-                  <Avatar className='my-1 w-10 h-10'>
-                    <AvatarImage className='object-cover' src={postDetail?.author.profilePicture} />
-                    <AvatarFallback />
-                  </Avatar>
-                </div>
-
-                {/* Nội dung comment */}
-                <div className='flex flex-1 flex-col'>
-                  <p>
-                    <span className='font-semibold mr-2 text-base'>{postDetail?.author.username}</span>
-                    <span className='text-gray-500 text-base'>
-                      {postDetail?.createdAt ? formatInstagramTime(postDetail.createdAt.toString()) : ''}
-                    </span>
-                  </p>
-                  <p className='text-base whitespace-pre-wrap break-all'>{postDetail?.caption}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Comments */}
-            <ListComment postId={postId as string} onReply={handleReply} />
-
-            {/* Footer */}
+            <ListComment postId={postId as string} onReply={handleReply} postDetail={postDetail ?? null} />
 
             <div className='px-4 pt-3 border-t border-gray-200 text-sm '>
               <div className='flex items-center justify-between mb-1'>
@@ -357,37 +329,41 @@ export default function DetailPost() {
           </div>
         </div>
       </div>
-      <div className='border-t border-gray-500 max-w-full mt-12'></div>
-      <div className='mt-12'>
-        <div className='mb-5'>
-          <p className='text-gray-500 font-medium'>
-            Thêm các bài viết từ{' '}
-            <NavLink to={`/${username}`} className='text-black hover:underline'>
-              {username}
-            </NavLink>
-          </p>
-        </div>
-        <div className='grid grid-cols-3 gap-2 md:gap-[3px]'>
-          {posts.map((post) => (
-            <NavLink to={`/${username}/p/${post._id}`} className='w-full h-full block'>
-              <div key={post._id} className='w-full aspect-[3/4] bg-gray-200 relative cursor-pointer group '>
-                <img src={post.images[0]} alt={post.caption} className='w-full h-full object-cover' />
+      {!isModal && (
+        <>
+          <div className='border-t border-gray-500 max-w-full mt-12'></div>
+          <div className='mt-12'>
+            <div className='mb-5'>
+              <p className='text-gray-500 font-medium'>
+                Thêm các bài viết từ{' '}
+                <NavLink to={`/${username}`} className='text-black hover:underline'>
+                  {username}
+                </NavLink>
+              </p>
+            </div>
+            <div className='grid grid-cols-3 gap-2 md:gap-[3px]'>
+              {posts.map((post) => (
+                <NavLink to={`/${username}/p/${post._id}`} className='w-full h-full block'>
+                  <div key={post._id} className='w-full aspect-[3/4] bg-gray-200 relative cursor-pointer group '>
+                    <img src={post.images[0]} alt={post.caption} className='w-full h-full object-cover' />
 
-                <div className='absolute inset-0 bg-black/0 group-hover:bg-black/50 transition flex items-center justify-center'>
-                  <div className='flex gap-5 text-white font-semibold text-lg opacity-0 group-hover:opacity-100 transition'>
-                    <div className='flex items-center gap-1'>
-                      <HeartIcon /> <span> {post.likesCount}</span>
-                    </div>
-                    <div className='flex items-center gap-1'>
-                      <MessageCircleMoreIcon /> <span>{post.commentsCount}</span>
+                    <div className='absolute inset-0 bg-black/0 group-hover:bg-black/50 transition flex items-center justify-center'>
+                      <div className='flex gap-5 text-white font-semibold text-lg opacity-0 group-hover:opacity-100 transition'>
+                        <div className='flex items-center gap-1'>
+                          <HeartIcon /> <span> {post.likesCount}</span>
+                        </div>
+                        <div className='flex items-center gap-1'>
+                          <MessageCircleMoreIcon /> <span>{post.commentsCount}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </NavLink>
-          ))}
-        </div>
-      </div>
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

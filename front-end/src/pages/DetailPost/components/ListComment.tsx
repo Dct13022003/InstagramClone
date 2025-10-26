@@ -3,13 +3,18 @@ import { Comment, CommentResponse } from '../../../types/comment.type'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import { fetchComments, likeComment, unlikeComment } from '../../../apis/post.api'
 import CommentItem from './CommentItem'
+import { PostDetail } from '../../../types/post.type'
+import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar'
+import { formatInstagramTime } from '../../../utils/time'
 
 export default function ListComment({
   postId,
-  onReply
+  onReply,
+  postDetail
 }: {
   postId: string
   onReply?: ({ username, comment_id }: { username: string; comment_id: string }) => void
+  postDetail: PostDetail | null
 }) {
   const queryClient = useQueryClient()
   const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
@@ -115,6 +120,27 @@ export default function ListComment({
             scrollableTarget='scrollableDiv'
             style={{ display: 'flex', flexDirection: 'column' }}
           >
+            {postDetail?.caption != '' && (
+              <div className='flex py-3'>
+                {/* Avatar */}
+                <div className='pr-3 flex items-start'>
+                  <Avatar className='my-1 w-10 h-10'>
+                    <AvatarImage className='object-cover' src={postDetail?.author.profilePicture} />
+                    <AvatarFallback />
+                  </Avatar>
+                </div>
+
+                <div className='flex flex-1 flex-col'>
+                  <p>
+                    <span className='font-semibold mr-2 text-base'>{postDetail?.author.username}</span>
+                    <span className='text-gray-500 text-base'>
+                      {postDetail?.createdAt ? formatInstagramTime(postDetail.createdAt.toString()) : ''}
+                    </span>
+                  </p>
+                  <p className='text-base whitespace-pre-wrap break-all'>{postDetail?.caption}</p>
+                </div>
+              </div>
+            )}
             {comments.map((c) => (
               <CommentItem
                 key={c._id}

@@ -11,7 +11,7 @@ interface SearchPanelProps {
   open: boolean
 }
 
-export default function SearchOpen({ searchOpen, open }: SearchPanelProps) {
+export default function NotifyOpen({ searchOpen, open }: SearchPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
 

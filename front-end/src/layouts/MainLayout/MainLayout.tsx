@@ -10,8 +10,11 @@ export default function MainLayout() {
     useEffect(() => {
       if (pathname.startsWith('/chat')) {
         setOpen(false)
+      } else {
+        setOpen(true)
       }
-    }, [pathname, setOpen])
+      console.log('render')
+    }, [pathname])
 
     return null
   }

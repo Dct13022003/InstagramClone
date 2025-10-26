@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-interface PostModalState {
+interface ModalCreatePostState {
   images: File[]
   caption: string
   isOpen: boolean
@@ -11,7 +11,7 @@ interface PostModalState {
   reset: () => void
 }
 
-export const usePostModal = create<PostModalState>((set) => ({
+export const usePostModalCreatePost = create<ModalCreatePostState>((set) => ({
   images: [],
   caption: '',
   isOpen: false,

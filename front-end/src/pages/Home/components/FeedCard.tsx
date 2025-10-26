@@ -6,7 +6,7 @@ import { createComment, likePost, unlikePost } from '../../../apis/post.api'
 import { PostDetail } from '../../../types/post.type'
 import { formatInstagramTime } from '../../../utils/time'
 import EmojiPicker from 'emoji-picker-react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { followUser } from '../../../apis/follow.api'
 import Caption from '../../../components/Caption'
 import { Comment } from '../../../types/comment.type'
@@ -25,6 +25,8 @@ export default function FeedCard({ feed }: FeedCardProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [localComments, setLocalComments] = useState<Comment[]>([])
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const commentMutation = useMutation({
     mutationFn: ({ content, postId }: { content: string; postId: string }) =>
@@ -161,6 +163,14 @@ export default function FeedCard({ feed }: FeedCardProps) {
     }
   }, [])
 
+  const handleOpenPost = (username: string, postId: string) => {
+    if (!username) return
+
+    navigate(`/${username}/p/${postId}`, {
+      state: { backgroundLocation: (location.pathname = `/${username}`) }
+    })
+  }
+
   const handleInput = () => {
     const el = textareaRef.current
     if (!el) return
@@ -221,7 +231,9 @@ export default function FeedCard({ feed }: FeedCardProps) {
               <HeartIcon className='hover:text-gray-500' />
             </button>
           )}
-          <MessageCircleIcon className='cursor-pointer w-7 h-7' />
+          <button onClick={() => handleOpenPost(feed.author.username as string, feed._id)}>
+            <MessageCircleIcon className='cursor-pointer w-7 h-7' />
+          </button>
         </div>
         <div>
           <BookmarkIcon className='cursor-pointer w-7 h-7' />
