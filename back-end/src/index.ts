@@ -61,8 +61,8 @@ io.on('connection', (socket) => {
   })
 
   socket.on('join-conversation', (conversationId) => {
-    console.log('User joining conversation:', conversationId)
     socket.join(conversationId)
+    console.log('ROOOM?: ', io.sockets.adapter.rooms)
   })
 
   socket.on('leave-conversation', (conversationId) => {
@@ -70,15 +70,15 @@ io.on('connection', (socket) => {
   })
 
   socket.on('send-message', async (msg) => {
-    const { conversation, senderId } = msg
+    const { conversation, sender } = msg
     const resend_msg = await Message.create(msg)
-    io.to(users[senderId].socketid).emit('resend-message', resend_msg)
+    console.log('Message resend :', resend_msg)
+    io.to(users[sender].socketid).emit('resend-message', resend_msg)
     socket.to(conversation).emit('new-message', resend_msg)
   })
 
   socket.on('typing', (data) => {
     const { roomId } = data
-    console.log('Typing event in conversation:', roomId)
     socket.to(roomId).emit('display_typing', { ...data })
   })
 })

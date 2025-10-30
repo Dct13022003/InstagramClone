@@ -8,6 +8,8 @@ import { useMessages } from '../../../hooks/useMessages'
 import { AppContext } from '../../../context/app.context'
 import { groupMessagesByTime } from '../../../utils/time'
 import { getSocket } from '../../../utils/socket'
+import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar'
+import { EllipsisVertical, Reply, Smile } from 'lucide-react'
 
 type OutletContextType = {
   currentUser: string
@@ -23,7 +25,7 @@ type TypingUser = {
 export default function MessageList() {
   const { profile } = useContext(AppContext)
   const { conversationId } = useParams()
-  const { currentUser, conversations } = useOutletContext<OutletContextType>()
+  const { currentUser } = useOutletContext<OutletContextType>()
   const { data, fetchNextPage } = useMessages(conversationId || '')
   const { socket } = useContext(AppContext)
   const [isTypingUsers, setTypingUsers] = useState<TypingUser[]>([])
@@ -31,7 +33,6 @@ export default function MessageList() {
   const queryClient = useQueryClient()
   const messages = data?.pages.flatMap((page) => page.messages) ?? []
   const messagesToRender = data ? groupMessagesByTime([...messages].reverse()).reverse() : []
-  console.log('messagesToRender:', messagesToRender)
   const hasMore = data?.pages[data.pages.length - 1]?.hasNextPage ?? false
 
   useEffect(() => {
@@ -39,11 +40,13 @@ export default function MessageList() {
   }, [messages])
 
   useEffect(() => {
-    if (!socket) {
-      console.log('Không có socket')
-      return
+    if (!socket) return
+
+    const handleConnect = () => {
+      console.log('Socket connected!')
+      socket.emit('join-conversation', conversationId)
     }
-    socket.emit('join-conversation', conversationId)
+
     const handleIncomingMessage = (msg: Message) => {
       if (msg.conversation === conversationId) {
         queryClient.setQueryData(['messages', conversationId], (old: InfiniteData<GetMessagesResponse> | undefined) => {
@@ -61,16 +64,14 @@ export default function MessageList() {
         })
       }
     }
-
-    socket.on('resend-message', handleIncomingMessage)
+    socket.emit('join-conversation', conversationId)
     socket.on('new-message', handleIncomingMessage)
 
     return () => {
-      socket.off('resend-message', handleIncomingMessage)
       socket.off('new-message', handleIncomingMessage)
       socket.emit('leave-conversation', conversationId)
     }
-  }, [socket, conversationId, queryClient])
+  }, [socket, conversationId])
 
   useEffect(() => {
     if (!socket) return
@@ -105,24 +106,52 @@ export default function MessageList() {
     }
   }, [socket, conversationId])
 
-  const handleSendMessage = (content: string) => {
-    if (!conversationId) return
-    const conversation = conversations?.find((c) => c._id === conversationId)
-
-    const receiverId = conversation?.other_participants?.[0]._id
-    console.log(conversation)
-
-    if (receiverId) {
-      const msg = {
-        conversation: conversationId,
-        senderId: currentUser,
-        receiverId,
-        content
-      }
-      const socket = getSocket()
-      if (!socket) return
-      socket.emit('send-message', msg)
+  const optimisticUi = (payload: { content?: string; type: 'text' | 'image' | 'video' | 'file'; url?: string }) => {
+    const { content, type, url } = payload
+    const tempMessage: Message = {
+      _id: `temp-${Date.now()}`,
+      conversation: conversationId,
+      sender: { _id: currentUser },
+      media: { url },
+      content,
+      type,
+      createdAt: new Date().toISOString(),
+      status: 'pending'
     }
+
+    queryClient.setQueryData(['messages', conversationId], (old: InfiniteData<GetMessagesResponse> | undefined) => {
+      if (!old) return old
+      return {
+        ...old,
+        pages: [
+          {
+            ...old.pages[0],
+            messages: [tempMessage, ...old.pages[0].messages]
+          },
+          ...old.pages.slice(1)
+        ]
+      }
+    })
+  }
+
+  const handleSendMessage = (payload: {
+    content?: string
+    type: 'text' | 'image' | 'video' | 'file'
+    url?: string
+  }) => {
+    const { content, type, url } = payload
+    if (!conversationId || !currentUser) return
+    const socket = getSocket()
+    if (!socket) return
+
+    socket.emit('send-message', {
+      conversation: conversationId,
+      sender: currentUser,
+      content,
+      media: { url },
+      profilePicture: profile?.profilePicture,
+      type
+    })
   }
 
   const handleTyping = (isTyping: boolean) => {
@@ -137,6 +166,7 @@ export default function MessageList() {
       isTyping
     })
   }
+
   return (
     <div className='flex flex-col h-full'>
       {/* Header */}
@@ -170,16 +200,49 @@ export default function MessageList() {
                   )
                 } else {
                   const message = item.message as Message
-                  const isCurrentUser = message.senderId === currentUser
+                  const isCurrentUser = message.sender?._id === currentUser
                   return (
                     <>
-                      <div key={message._id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-1`}>
-                        <div
-                          className={`rounded-lg px-4 py-2 max-w-xs ${
-                            isCurrentUser ? 'bg-blue-500 text-white mr-5' : 'bg-gray-100 text-gray-900 ml-5'
-                          }`}
-                        >
-                          {message.content}
+                      <div
+                        key={message._id}
+                        className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start  pl-4'} mb-1`}
+                      >
+                        <div className={`group flex gap-3 ${isCurrentUser ? '' : 'flex-row-reverse'} mb-1`}>
+                          <div
+                            className={`flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${isCurrentUser ? '' : 'flex-row-reverse '}`}
+                          >
+                            <EllipsisVertical className='w-4 h-4' />
+                            <Reply className='w-4 h-4' />
+                            <Smile className='w-4 h-4' />
+                          </div>
+                          <div className='flex items-center'>
+                            {!isCurrentUser && (
+                              <Avatar>
+                                <AvatarImage className='object-cover' src={message.sender?.profilePicture} />
+                                <AvatarFallback content='aaaa' />
+                              </Avatar>
+                            )}
+                            <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                              {message.type == 'text' ? (
+                                <span
+                                  className={`rounded-lg px-4 py-2 max-w-xs ${
+                                    isCurrentUser ? 'bg-blue-500 text-white mr-5' : 'bg-gray-100 text-gray-900 ml-2'
+                                  }`}
+                                >
+                                  {message.content}
+                                </span>
+                              ) : (
+                                <div
+                                  className={`max-w-[60%] overflow-hidden rounded-2xl ${isCurrentUser ? 'mr-5' : 'ml-2'}`}
+                                >
+                                  <img
+                                    src={message.media?.url}
+                                    className='w-full h-auto max-h-[400px] object-cover rounded-2xl'
+                                  ></img>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </>
@@ -197,17 +260,27 @@ export default function MessageList() {
             </div>
           </InfiniteScroll>
         </div>
-        {isTypingUsers.length > 0 && (
-          <div className='flex justify-start mb-1'>
-            <div className='rounded-lg px-4 py-2 max-w-xs bg-gray-100 text-gray-900 ml-5 italic'>
-              Đang nhập tin nhắn...
+        {isTypingUsers.length > 0 &&
+          isTypingUsers.map((userTyping) => (
+            <div key={userTyping._id} className='flex justify-start mb-1'>
+              <Avatar>
+                <AvatarImage className='object-cover' src={userTyping.profilePicture} />
+                <AvatarFallback content='aaaa' />
+              </Avatar>
+              {/* <div className='rounded-lg px-4 py-2 max-w-xs bg-gray-100 text-gray-900 ml-5 italic'>
+                Đang nhập tin nhắn...
+              </div> */}
+              <div className='flex items-center'>
+                <span className='rounded-lg px-4 py-2 max-w-xs bg-gray-100 text-gray-900 ml-5 italic'>
+                  Đang nhập tin nhắn...
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          ))}
         <div ref={bottomRef} />
       </div>
 
-      <MessageInput onTypingChange={handleTyping} onSend={handleSendMessage} />
+      <MessageInput onTypingChange={handleTyping} onSend={handleSendMessage} optimisticUi={optimisticUi} />
     </div>
   )
 }

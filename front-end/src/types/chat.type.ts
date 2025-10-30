@@ -8,10 +8,11 @@ export interface Conversations {
 
 export interface Message {
   _id?: string
-  senderId: string
-  receiverId: string
-  content: string
+  sender: User
+  type: 'text' | 'image' | 'video' | 'file'
+  content?: string
   conversation: string
+  media?: any
   createdAt?: string
   updatedAt?: string
 }

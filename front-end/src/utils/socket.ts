@@ -15,9 +15,9 @@ export const connectSocket = (user_id: string): Socket => {
 
 export const getSocket = (): Socket | null => socket
 
-export const disconnectSocket = (): void => {
-  if (socket) {
-    socket.disconnect()
-    socket = null
+export const disconnectSocket = (sock?: Socket) => {
+  if (sock) {
+    sock.disconnect()
   }
+  socket = null
 }

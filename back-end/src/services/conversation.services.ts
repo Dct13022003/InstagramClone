@@ -4,13 +4,18 @@ import { Message } from '~/models/message.models'
 class ConversationService {
   async getConversation({ user_id, conversationId, page }: { user_id: string; conversationId: string; page: number }) {
     // Simulate a database call to get conversation
-    const messages = await Message.find({
-      conversation: new ObjectId(conversationId)
-    })
+    const messages = await Message.find({ conversation: conversationId })
+      .populate({
+        path: 'sender',
+        select: '_id username profilePicture'
+      })
+      .populate({
+        path: 'seenBy',
+        select: '_id username profilePicture'
+      })
       .sort({ createdAt: -1 })
-      .limit(10)
       .skip((page - 1) * 10)
-      .select('-__v')
+      .limit(10)
       .lean()
     const totalMessages = await Message.countDocuments()
     const hasNextPage = page * 10 < totalMessages
