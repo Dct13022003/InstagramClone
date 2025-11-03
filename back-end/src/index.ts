@@ -41,7 +41,8 @@ app.use('/comments', commentsRouter)
 app.use('/search', searchRouter)
 app.use(defaultErrorHandler)
 
-const users: { [key: string]: { socketid: string } } = {}
+// map userId -> array of socket ids
+const users: { [key: string]: string[] } = {}
 
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
@@ -51,18 +52,30 @@ const io = new Server(httpServer, {
 })
 
 io.on('connection', (socket) => {
-  const user_id = socket.handshake.query?.user_id as string
-  users[user_id] = { socketid: socket.id }
+  const rawUserId = socket.handshake.query?.user_id
+  const user_id = Array.isArray(rawUserId) ? rawUserId[0] : rawUserId
+  if (!user_id || typeof user_id !== 'string') return
+
+  // --- Thêm socket mới của user ---
+  if (!users[user_id]) {
+    users[user_id] = []
+  }
+  users[user_id].push(socket.id)
+
   console.log('user connected', user_id, socket.id)
   console.log(users)
+
   socket.on('disconnect', () => {
     console.log('user disconnected', user_id, socket.id)
-    delete users[user_id]
+    users[user_id] = users[user_id].filter((id) => id !== socket.id)
+    if (users[user_id].length === 0) {
+      delete users[user_id]
+    }
   })
 
   socket.on('join-conversation', (conversationId) => {
     socket.join(conversationId)
-    console.log('ROOOM?: ', io.sockets.adapter.rooms)
+    console.log('ROOOM  : ', io.sockets.adapter.rooms)
   })
 
   socket.on('leave-conversation', (conversationId) => {
@@ -70,10 +83,11 @@ io.on('connection', (socket) => {
   })
 
   socket.on('send-message', async (msg) => {
-    const { conversation, sender } = msg
+    const { conversation } = msg
     const resend_msg = await Message.create(msg)
-    console.log('Message resend :', resend_msg)
-    io.to(users[sender].socketid).emit('resend-message', resend_msg)
+    await resend_msg.populate('sender', 'username profilePicture')
+    const msgObj = JSON.parse(JSON.stringify(resend_msg))
+    console.log('Message: ', msgObj)
     socket.to(conversation).emit('new-message', resend_msg)
   })
 

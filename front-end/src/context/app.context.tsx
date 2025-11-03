@@ -37,11 +37,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     if (isAuthenticated && profile?._id) {
       if (!socket) {
         const newSocket = connectSocket(profile._id)
-
         newSocket.on('connect', () => console.log('✅ Socket connected'))
         newSocket.on('disconnect', () => console.log('❌ Socket disconnected'))
 
-        setSocket(newSocket) // ⚡ Trigger re-render context
+        setSocket(newSocket)
       }
     } else {
       if (socket) {

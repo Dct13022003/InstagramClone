@@ -66,8 +66,10 @@ export default function MessageList() {
     }
     socket.emit('join-conversation', conversationId)
     socket.on('new-message', handleIncomingMessage)
+    socket.on('connect', handleConnect)
 
     return () => {
+      socket.off('connect', handleConnect)
       socket.off('new-message', handleIncomingMessage)
       socket.emit('leave-conversation', conversationId)
     }
