@@ -13,6 +13,7 @@ export interface Message {
   content?: string
   conversation: string
   media?: any
+  replyTo?: Message
   createdAt?: string
   updatedAt?: string
 }

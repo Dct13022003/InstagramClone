@@ -55,8 +55,6 @@ io.on('connection', (socket) => {
   const rawUserId = socket.handshake.query?.user_id
   const user_id = Array.isArray(rawUserId) ? rawUserId[0] : rawUserId
   if (!user_id || typeof user_id !== 'string') return
-
-  // --- Thêm socket mới của user ---
   if (!users[user_id]) {
     users[user_id] = []
   }
@@ -82,18 +80,58 @@ io.on('connection', (socket) => {
     socket.leave(conversationId)
   })
 
-  socket.on('send-message', async (msg) => {
+  socket.on('send-message', async (msg, callback) => {
     const { conversation } = msg
-    const resend_msg = await Message.create(msg)
-    await resend_msg.populate('sender', 'username profilePicture')
-    const msgObj = JSON.parse(JSON.stringify(resend_msg))
-    console.log('Message: ', msgObj)
-    socket.to(conversation).emit('new-message', resend_msg)
+    try {
+      const created = await Message.create(msg)
+      const resend_msg = await Message.findById(created._id)
+        .populate({ path: 'sender', select: 'username profilePicture' })
+        .populate({
+          path: 'replyTo',
+          select: 'content media type sender',
+          populate: {
+            path: 'sender',
+            select: 'fullname'
+          }
+        })
+        .exec()
+      if (!resend_msg) {
+        callback({ status: 'error', message: 'message not found after create' })
+        return
+      }
+      console.log('Resend message:', resend_msg)
+      const msgObj = JSON.parse(JSON.stringify(resend_msg))
+      io.to(conversation).emit('new-message', msgObj)
+      // callback({ status: 'ok', data: temp_id })
+    } catch (err) {
+      callback({ status: 'error', message: 'lỗi gửi tin nhắn' })
+    }
   })
 
+  socket.on('delete-message', async (data, callback) => {
+    const { messageId, conversation } = data
+    try {
+      const deletedMessage = await Message.findByIdAndDelete(messageId).exec()
+      const msgObj = JSON.parse(JSON.stringify(deletedMessage))
+      console.log('Deleted message:', deletedMessage)
+      if (deletedMessage) {
+        io.to(conversation).emit('message-deleted', msgObj)
+      }
+    } catch (err) {
+      callback({ status: 'error', message: 'lỗi xóa tin nhắn' })
+    }
+  })
   socket.on('typing', (data) => {
     const { roomId } = data
     socket.to(roomId).emit('display_typing', { ...data })
+  })
+
+  socket.on('user-online', (data) => {
+    const { userId } = data
+    const socketIds = users[userId] || []
+    socketIds.forEach((id) => {
+      io.to(id).emit('friend-online', { userId })
+    })
   })
 })
 httpServer.listen(PORT, () => {

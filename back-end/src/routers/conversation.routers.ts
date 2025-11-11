@@ -1,7 +1,9 @@
+import { de } from '@faker-js/faker'
 import { Router } from 'express'
 import {
   createConversationController,
   createMessageController,
+  deleteConversationController,
   getAllConversationController,
   getConversationController
 } from '~/controllers/conversation.controllers'
@@ -19,4 +21,5 @@ conversationRouter.get('/', accessTokenValidator, wrapAsync(getAllConversationCo
 conversationRouter.post('/create', accessTokenValidator, wrapAsync(createConversationController))
 conversationRouter.post('/:conversationId/messages', accessTokenValidator, wrapAsync(createMessageController))
 conversationRouter.get('/:conversationId/messages', accessTokenValidator, wrapAsync(getConversationController))
+conversationRouter.delete('/:conversationId', accessTokenValidator, wrapAsync(deleteConversationController))
 export default conversationRouter

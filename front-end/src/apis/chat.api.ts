@@ -38,3 +38,12 @@ export const sendMessage = async (message: {
   const { data } = await http.post<Message>(`${API_URL}/messages`, message)
   return data
 }
+
+export const deleteMessage = async (messageId: string) : Promise<Message> => {
+  const { data } = await http.delete<SuccessResponse<Message>>(`${API_URL}/messages`, {
+    data: {
+      messageId
+    }
+  })
+  return data.result
+}

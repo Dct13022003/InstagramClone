@@ -1,23 +1,37 @@
 import EmojiPicker from 'emoji-picker-react'
 import { Heart, Image, Mic, SmileIcon, Sticker } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useContext, useRef, useState } from 'react'
 import { useUploadMedia } from '../../../hooks/useMedia'
+import { Message } from '../../../types/chat.type'
+import { AppContext } from '../../../context/app.context'
 
 type MessagePayload = {
+  temp_id: string
   type: 'text' | 'image'
   content?: string
   url?: string
+  replyTo?: string
+}
+
+type MessagePayloadOptimistic = {
+  type: 'text' | 'image'
+  content?: string
+  url?: string
+  replyTo?: Message
 }
 
 type MessageInputProps = {
   onSend: (payload: MessagePayload) => void
   onTypingChange?: (isTyping: boolean) => void
-  optimisticUi: (payload: MessagePayload) => void
+  optimisticUi: (payload: MessagePayloadOptimistic) => string | undefined
+  onReply?: Message | null
+  onCancelReply?: () => void
 }
 
 export default function MessageInput(Props: MessageInputProps) {
+  const { profile } = useContext(AppContext)
   const { mutateAsync: upload } = useUploadMedia()
-  const { onSend, onTypingChange, optimisticUi } = Props
+  const { onSend, onTypingChange, optimisticUi, onReply, onCancelReply } = Props
   const [previews, setPreviews] = useState<{ file: File | null; url: string; id: string }[]>([])
   const [message, setMessage] = useState('')
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -62,22 +76,23 @@ export default function MessageInput(Props: MessageInputProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (message.trim()) {
-      optimisticUi({ content: message, type: 'text' })
-      onSend({ content: message, type: 'text' })
+      const temp_id = optimisticUi({ content: message, type: 'text', replyTo: onReply })
+      onSend({ temp_id, content: message, type: 'text', replyTo: onReply?._id })
       setMessage('')
     }
     const currentPreviews = [...previews]
     setPreviews([])
+    onCancelReply()
     if (currentPreviews.length > 0) {
       for (const p of previews) {
         if (!p.file) continue
         const formData = new FormData()
         formData.append('image', p.file)
         try {
-          optimisticUi({ url: p.url, type: 'image' })
+          const temp_id = optimisticUi({ url: p.url, type: 'image', replyTo: onReply })
           const result = await upload(formData)
           if (result && result[0]?.url) {
-            onSend({ type: 'image', url: result[0].url })
+            onSend({ temp_id, type: 'image', url: result[0].url, replyTo: onReply?._id })
           }
         } catch (err) {
           console.error('Upload failed:', err)
@@ -100,7 +115,22 @@ export default function MessageInput(Props: MessageInputProps) {
   }
 
   return (
-    <div className='p-4 relative'>
+    <div className={`p-4 relative ${onReply && 'border-t-1'}`}>
+      {onReply && (
+        <div className='mb-2 p-2rounded-lg flex justify-between items-center'>
+          <div className='flex-col'>
+            <span>Đang trả lời {onReply.sender._id === profile?._id ? 'chính mình' : ''} </span>
+            <div>
+              {onReply.type === 'text' && <span className='italic'>{onReply.content}</span>}
+              {onReply.type === 'image' && <span className='text-base text-gray-400'>Hình ảnh</span>}
+            </div>
+          </div>
+
+          <button onClick={onCancelReply} className='text-gray-500 hover:text-gray-700 self-start'>
+            ✖
+          </button>
+        </div>
+      )}
       <form
         onSubmit={handleSubmit}
         onKeyDown={(e) => {
@@ -126,6 +156,7 @@ export default function MessageInput(Props: MessageInputProps) {
             ))}
           </div>
         )}
+
         <div className='flex gap-3'>
           <button
             ref={buttonRef}

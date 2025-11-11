@@ -55,3 +55,13 @@ export const createMessageController = async (req: Request, res: Response) => {
     result: message
   })
 }
+
+export const deleteMessageController = async (req: Request, res: Response) => {
+  const { user_id } = req.decode_authorization as TokenPayload
+  const { messageId } = req.body as { messageId: string }
+  const message = await conversationService.deleteMessage(user_id, messageId)
+  res.status(200).json({
+    message: 'Delete message successfully',
+    result: message
+  })
+}

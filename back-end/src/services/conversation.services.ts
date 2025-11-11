@@ -3,16 +3,11 @@ import { ObjectId } from 'mongodb'
 import { Message } from '~/models/message.models'
 class ConversationService {
   async getConversation({ user_id, conversationId, page }: { user_id: string; conversationId: string; page: number }) {
-    // Simulate a database call to get conversation
     const messages = await Message.find({ conversation: conversationId })
-      .populate({
-        path: 'sender',
-        select: '_id username profilePicture'
-      })
-      .populate({
-        path: 'seenBy',
-        select: '_id username profilePicture'
-      })
+      .populate([
+        { path: 'sender', select: 'username profilePicture' },
+        { path: 'replyTo', select: 'type content media' }
+      ])
       .sort({ createdAt: -1 })
       .skip((page - 1) * 10)
       .limit(10)
@@ -22,16 +17,15 @@ class ConversationService {
     return { messages, hasNextPage }
   }
   async getAllConversationService(user_id: string, page: number, limit: number) {
-    // Simulate a database call to get all conversations for a user
     const conversations = await Conversation.aggregate([
       {
         $match: {
-          participants: new ObjectId(user_id) // Chỉ lấy conversation có bạn tham gia
+          participants: new ObjectId(user_id)
         }
       },
       {
         $lookup: {
-          from: 'users', // Collection users
+          from: 'users',
           localField: 'participants',
           foreignField: '_id',
           as: 'participants_info'
@@ -57,7 +51,7 @@ class ConversationService {
           is_group: 1,
           last_message: 1,
           updated_at: 1,
-          other_participants: 1 // Chỉ giữ lại thông tin người khác
+          other_participants: 1
         }
       },
       {
@@ -70,7 +64,6 @@ class ConversationService {
     return conversations
   }
   async createConversation(user_id: string, receiverId: string) {
-    // Kiểm tra xem cuộc trò chuyện đã tồn tại chưa
     const existingConversation = await Conversation.findOne({
       participants: { $all: [new ObjectId(user_id), new ObjectId(receiverId)] }
     })
@@ -78,7 +71,6 @@ class ConversationService {
       return existingConversation
     }
 
-    // Tạo cuộc trò chuyện mới nếu chưa tồn tại
     const newConversation = new Conversation({
       participants: [new ObjectId(user_id), new ObjectId(receiverId)]
     })
@@ -105,6 +97,13 @@ class ConversationService {
       conversation: new ObjectId(conversation_id)
     }) // Lưu tin nhắn vào cơ sở dữ liệu
     return newMessage
+  }
+  async deleteMessage(user_id: string, messageId: string) {
+    const deletedMessage = await Message.findOneAndDelete({
+      _id: new ObjectId(messageId),
+      sender: new ObjectId(user_id)
+    })
+    return deletedMessage
   }
 }
 export const conversationService = new ConversationService()

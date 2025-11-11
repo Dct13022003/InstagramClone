@@ -84,7 +84,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <div
       style={{
-        paddingRight: open ? 0 : `calc(${SIDEBAR_WIDTH} - ${SIDEBAR_WIDTH_ICON})`
+        paddingRight: open || pathname.startsWith('/chat') ? 0 : `calc(${SIDEBAR_WIDTH} - ${SIDEBAR_WIDTH_ICON})`
       }}
     >
       <Sidebar collapsible='icon' {...props}>
