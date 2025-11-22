@@ -1,5 +1,9 @@
 import { Router } from 'express'
-import { saveSearchHistoryController, searchHistoryController, searchUserController } from '~/controllers/search.controllers'
+import {
+  saveSearchHistoryController,
+  searchHistoryController,
+  searchUserController
+} from '~/controllers/search.controllers'
 import { accessTokenValidator } from '~/middlewares/user.middlewares'
 import { wrapAsync } from '~/utils/handler'
 

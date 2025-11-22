@@ -10,6 +10,7 @@ export interface IUser extends Document {
   gender?: 'male' | 'female'
   email_verify_token: string
   forgot_password_token: string
+  blocked_users: Types.ObjectId[]
   verify?: 'Unverified' | 'Verified' | 'Banned'
 }
 
@@ -24,6 +25,7 @@ const userSchema = new Schema<IUser>(
     gender: { type: String, enum: ['male', 'female'] },
     email_verify_token: { type: String, default: '' },
     forgot_password_token: { type: String, default: '' },
+    blocked_users: [{ type: Types.ObjectId, ref: 'User' }],
     verify: { type: String, enum: ['Unverified', 'Verified', 'Banned'], default: 'Unverified' }
   },
   { timestamps: true }

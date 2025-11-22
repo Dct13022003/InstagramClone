@@ -1,10 +1,10 @@
 import { User } from './user.type'
 
-export interface Conversations {
-  id?: string
-  limit?: number
-  page?: number
-}
+// export interface Conversations {
+//   id?: string
+//   limit?: number
+//   page?: number
+// }
 
 export interface Message {
   _id?: string
@@ -20,11 +20,13 @@ export interface Message {
 
 export interface Conversation {
   _id: string
-  participants_info?: User[]
+  type: 'private' | 'group'
+  participants: User[]
   last_message?: Message
-  messages?: Message[]
-  updated_at: string
-  other_participants?: User[]
+  createdAt: string
+  updatedAt: string
+  displayName: string
+  displayAvatar: string
 }
 
 export interface GetMessagesResponse {

@@ -14,6 +14,16 @@ export const fetchConversations = async (page?: number, limit?: number): Promise
   return data.result
 }
 
+export const fetchPendingConversations = async (page?: number, limit?: number): Promise<Conversation[]> => {
+  const { data } = await http.get<SuccessResponse<Conversation[]>>(`${API_URL}/pending`, {
+    params: {
+      page: page || 1,
+      limit
+    }
+  })
+  return data.result
+}
+
 export const fetchMessages = async ({
   conversationId,
   page
@@ -39,11 +49,31 @@ export const sendMessage = async (message: {
   return data
 }
 
-export const deleteMessage = async (messageId: string) : Promise<Message> => {
+export const deleteMessage = async (messageId: string): Promise<Message> => {
   const { data } = await http.delete<SuccessResponse<Message>>(`${API_URL}/messages`, {
     data: {
       messageId
     }
   })
   return data.result
+}
+
+export const createConversation = async (recipientId: string): Promise<Conversation> => {
+  const { data } = await http.post<SuccessResponse<Conversation>>(`${API_URL}/create`, {
+    recipientId
+  })
+  return data.result
+}
+
+export const updateStatusParticipant = async (conversationId: string, newStatus: string) => {
+  const { data } = await http.patch<SuccessResponse<Conversation>>(`${API_URL}/updateStatusParticipant`, {
+    conversationId,
+    newStatus
+  })
+  return data
+}
+
+export const deleteConversation = async (conversationId: string) => {
+  const { data } = await http.patch<SuccessResponse<Conversation>>(`${API_URL}/delete/:${conversationId}`)
+  return data
 }

@@ -1,10 +1,8 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
-import { saveSearchHistory, search, searchHistory } from '../../../apis/search.api'
+import { useEffect, useRef } from 'react'
 import { Skeleton } from '../../../components/ui/skeleton'
-import { debounce } from 'lodash'
 import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar'
 import { NavLink } from 'react-router-dom'
+import { useSearch } from '../../../hooks/useSearch'
 
 interface SearchPanelProps {
   searchOpen: boolean
@@ -13,7 +11,6 @@ interface SearchPanelProps {
 
 export default function SearchOpen({ searchOpen, open }: SearchPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const [query, setQuery] = useState('')
 
   useEffect(() => {
     if (searchOpen) {
@@ -22,25 +19,7 @@ export default function SearchOpen({ searchOpen, open }: SearchPanelProps) {
     }
   }, [searchOpen])
 
-  const searchUsersQuery = useQuery({
-    queryKey: ['search', query],
-    queryFn: () => search(query),
-    enabled: query.trim().length > 0
-  })
-
-  const searchHistoryQuery = useQuery({
-    queryKey: ['searchHistory'],
-    queryFn: () => searchHistory()
-  })
-
-  const saveHistory = useMutation({
-    mutationKey: ['searchHistory'],
-    mutationFn: (searchUserId: string) => saveSearchHistory(searchUserId)
-  })
-
-  const handleChange = debounce((value: string) => {
-    setQuery(value)
-  }, 300)
+  const { handleChange, searchUsersQuery, searchHistoryQuery, saveHistory } = useSearch()
 
   return (
     <div

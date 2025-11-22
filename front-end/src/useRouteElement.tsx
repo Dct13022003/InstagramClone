@@ -36,7 +36,10 @@ export default function useRouteElement(backgroundLocation?: Location<any>) {
           {
             path: path.chat,
             element: <ChatPage />,
-            children: [{ path: ':conversationId', element: <MessageList /> }]
+            children: [
+              { path: 'request', element: <ChatPage /> },
+              { path: ':conversationId', element: <MessageList /> }
+            ]
           },
           {
             path: '/:username/p/:postId',

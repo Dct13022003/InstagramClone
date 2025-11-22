@@ -16,6 +16,7 @@ import conversationRouter from './routers/conversation.routers'
 import { Message } from './models/message.models'
 import commentsRouter from './routers/comment.routers'
 import searchRouter from './routers/search.routers'
+import { Conversation } from './models/conversation.models'
 // import '~/utils/fake'
 
 dotenv.config({})
@@ -41,15 +42,14 @@ app.use('/comments', commentsRouter)
 app.use('/search', searchRouter)
 app.use(defaultErrorHandler)
 
-// map userId -> array of socket ids
-const users: { [key: string]: string[] } = {}
-
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
   cors: {
     origin: 'http://localhost:3000' // client url
   }
 })
+// map userId -> array of socket ids
+const users: { [key: string]: string[] } = {}
 
 io.on('connection', (socket) => {
   const rawUserId = socket.handshake.query?.user_id
@@ -81,30 +81,56 @@ io.on('connection', (socket) => {
   })
 
   socket.on('send-message', async (msg, callback) => {
-    const { conversation } = msg
+    const { conversation, sender } = msg
     try {
+      const conv = await Conversation.findById(conversation)
+      if (!conv) {
+        callback({ status: 'error', message: 'Conversation not found' })
+        return
+      }
+
+      const participant = conv.participants.find((p) => p.user.toString() === sender.toString())
+
+      if (participant && participant.is_deleted) {
+        await Conversation.updateOne(
+          {
+            _id: conversation,
+            'participants.user': sender
+          },
+          {
+            $set: {
+              'participants.$.is_deleted': false,
+              'participants.$.deleted_at': null
+            }
+          }
+        )
+      }
+
       const created = await Message.create(msg)
+
       const resend_msg = await Message.findById(created._id)
         .populate({ path: 'sender', select: 'username profilePicture' })
         .populate({
           path: 'replyTo',
           select: 'content media type sender',
-          populate: {
-            path: 'sender',
-            select: 'fullname'
-          }
+          populate: { path: 'sender', select: 'fullname' }
         })
         .exec()
+
       if (!resend_msg) {
-        callback({ status: 'error', message: 'message not found after create' })
+        callback({ status: 'error', message: 'Message not found after creation' })
         return
       }
-      console.log('Resend message:', resend_msg)
+
+      await Conversation.findByIdAndUpdate(conversation, { $set: { lastMessage: resend_msg._id } }).exec()
+
       const msgObj = JSON.parse(JSON.stringify(resend_msg))
       io.to(conversation).emit('new-message', msgObj)
-      // callback({ status: 'ok', data: temp_id })
+
+      callback({ status: 'ok', data: created._id })
     } catch (err) {
-      callback({ status: 'error', message: 'lỗi gửi tin nhắn' })
+      console.error('Error in send-message:', err)
+      callback({ status: 'error', message: 'Error sending message' })
     }
   })
 
