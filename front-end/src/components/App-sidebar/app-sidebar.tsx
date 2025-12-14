@@ -1,8 +1,7 @@
-import { BadgePlus, ChevronUp, Film, Heart, Home, Search, User2 } from 'lucide-react'
+import { BadgePlus, Film, Heart, Home, Search } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
@@ -10,14 +9,16 @@ import {
   SidebarMenuItem,
   useSidebar
 } from '../ui/sidebar'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu'
 import { Collapsible, CollapsibleTrigger } from '../ui/collapsible'
-import { NavLink, useLocation } from 'react-router-dom'
-import { useRef, useState } from 'react'
-import { SIDEBAR_WIDTH, SIDEBAR_WIDTH_ICON } from '../ui/sidebar'
+import { NavLink } from 'react-router-dom'
+import { useContext, useRef } from 'react'
 import SearchOpen from '../../layouts/MainLayout/component/SearchOpen'
 import { Explore, Message } from '../Icons/Icons'
 import { usePostModalCreatePost } from '../../store/useCreatePostModal.store'
+import { useIsMobile } from '../../hooks/use-mobile'
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+import { AppContext } from '../../context/app.context'
+import { useSearchContext } from '../../layouts/MainLayout/SearchContext'
 
 const items = [
   {
@@ -42,7 +43,7 @@ const items = [
     title: 'Reels',
     url: '/',
     icon: Film,
-    isActive: false
+    isActive: true
   },
   {
     title: 'Tin nhắn',
@@ -64,108 +65,106 @@ const items = [
   }
 ]
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [searchOpen, setSearchOpen] = useState(false)
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const { open, setOpen } = useSidebar()
+  const { searchOpen, setSearchOpen } = useSearchContext()
+  const { profile } = useContext(AppContext)
+  const { open } = useSidebar()
   const { open: openModal } = usePostModalCreatePost()
-  const pathname = useLocation().pathname
+  const isMobile = useIsMobile()
+  const searchButtonRef = useRef<HTMLButtonElement>(null)
   const handleSearchClick = () => {
-    if (searchOpen) {
-      if (pathname.startsWith('/chat')) {
-        setOpen(false)
-      } else setOpen(true)
-      setSearchOpen(false)
-    } else {
-      setSearchOpen(true)
-      setOpen(false)
-      setTimeout(() => searchInputRef.current?.focus(), 100)
-    }
+    setSearchOpen((prev) => !prev)
   }
+
   return (
-    <div
-      style={{
-        paddingRight: open || pathname.startsWith('/chat') ? 0 : `calc(${SIDEBAR_WIDTH} - ${SIDEBAR_WIDTH_ICON})`
-      }}
-    >
+    <div>
       <Sidebar collapsible='icon' {...props}>
         <SidebarContent>
-          <SidebarGroup className='h-full justify-between '>
-            <SidebarGroupLabel className='text-xl mb-5'>Application</SidebarGroupLabel>
-            <SidebarMenu className='h-full gap-2'>
-              {items.map((item) => (
-                <Collapsible key={item.title} asChild defaultOpen={item.isActive} className='group/collapsible'>
-                  <SidebarMenuItem className='h-1/8 flex items-center '>
-                    <CollapsibleTrigger asChild>
-                      {item.title === 'Tìm kiếm' ? (
+          <SidebarGroup className='h-full justify-around items-center'>
+            <SidebarMenu className={`h-full gap-2 `}>
+              <SidebarGroupLabel className={`text-xl mb-5 ${isMobile ? 'hidden' : ''}`}>Application</SidebarGroupLabel>
+              {!isMobile &&
+                items.map((item) => (
+                  <Collapsible key={item.title} defaultOpen={item.isActive} className='group/collapsible' asChild>
+                    <SidebarMenuItem className='h-1/8 flex flex-1 items-center '>
+                      <CollapsibleTrigger asChild>
+                        {item.title === 'Tìm kiếm' ? (
+                          <SidebarMenuButton
+                            ref={searchButtonRef}
+                            tooltip={item.title}
+                            className={`w-full h-10 group-data-[collapsible=icon]:size-12!`}
+                            asChild
+                            onClick={handleSearchClick}
+                          >
+                            <button type='button'>
+                              {item.icon && <item.icon className='!w-7 !h-7' />}
+                              <span className={`ml-3 text-xl truncate ${isMobile ? 'hidden' : ''}`}>{item.title}</span>
+                            </button>
+                          </SidebarMenuButton>
+                        ) : (
+                          <SidebarMenuButton
+                            tooltip={item.title}
+                            className='w-full h-10 group-data-[collapsible=icon]:size-12!'
+                            asChild
+                            onClick={() => {
+                              setSearchOpen(false)
+                              if (item.title === 'Tạo') {
+                                openModal()
+                              }
+                            }}
+                          >
+                            <NavLink to={item.url}>
+                              {item.icon && <item.icon className='!w-7 !h-7' />}
+                              <span className={`ml-3 text-xl truncate `}>{item.title}</span>
+                            </NavLink>
+                          </SidebarMenuButton>
+                        )}
+                      </CollapsibleTrigger>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                ))}
+              {isMobile &&
+                items.map((item) => (
+                  <>
+                    {item.title !== 'Tìm kiếm' && item.title !== 'Thông báo' && (
+                      <SidebarMenuItem className='h-1/8 flex flex-1 items-center '>
                         <SidebarMenuButton
                           tooltip={item.title}
-                          className='w-full h-12 group-data-[collapsible=icon]:size-12!'
-                          asChild
-                          onClick={handleSearchClick}
-                        >
-                          <button type='button'>
-                            {item.icon && <item.icon className='!w-8 !h-8' />}
-                            <span className='ml-3 text-xl truncate group-data-[state=collapsed]:hidden'>
-                              {item.title}
-                            </span>
-                          </button>
-                        </SidebarMenuButton>
-                      ) : (
-                        <SidebarMenuButton
-                          tooltip={item.title}
-                          className='w-full h-12 group-data-[collapsible=icon]:size-12!'
+                          className='w-full h-10 group-data-[collapsible=icon]:size-12! justify-center'
                           asChild
                           onClick={() => {
-                            if (open === false) {
-                              setSearchOpen(false)
-                            }
                             if (item.title === 'Tạo') {
                               openModal()
                             }
                           }}
                         >
-                          <NavLink to={item.url}>
-                            {item.icon && <item.icon className='!w-8 !h-8' />}
-                            <span className='ml-3 text-xl truncate group-data-[state=collapsed]:hidden'>
-                              {item.title}
-                            </span>
-                          </NavLink>
+                          <NavLink to={item.url}>{item.icon && <item.icon className='!w-6 !h-6' />}</NavLink>
                         </SidebarMenuButton>
-                      )}
-                    </CollapsibleTrigger>
-                  </SidebarMenuItem>
-                </Collapsible>
-              ))}
+                      </SidebarMenuItem>
+                    )}
+                  </>
+                ))}
+              <SidebarMenuItem className='flex-1'>
+                <SidebarMenuButton
+                  className={`w-full h-10 group-data-[collapsible=icon]:size-12!`}
+                  asChild
+                  onClick={handleSearchClick}
+                >
+                  <button type='button'>
+                    <NavLink to='/' className='flex items-center gap-3'>
+                      <Avatar>
+                        <AvatarImage width={1} height={1} className='object-cover' src={profile?.profilePicture} />
+                        <AvatarFallback />
+                      </Avatar>
+                      {!isMobile && <span className='ml-1 text-xl'>Trang cá nhân</span>}
+                    </NavLink>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
-            <SidebarFooter>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuButton className='w-full'>
-                        <User2 /> Xem thêm
-                        <ChevronUp className='ml-auto' />
-                      </SidebarMenuButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent side='top' className='w-[--radix-popper-anchor-width]'>
-                      <DropdownMenuItem>
-                        <span>Account</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <span>Billing</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <span>Sign out</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarFooter>
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-      <SearchOpen searchOpen={searchOpen} open={open} />
+      {!isMobile && <SearchOpen searchOpen={searchOpen} open={open} searchButtonRef={searchButtonRef} />}
     </div>
   )
 }

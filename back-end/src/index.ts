@@ -48,32 +48,71 @@ const io = new Server(httpServer, {
     origin: 'http://localhost:3000' // client url
   }
 })
-// map userId -> array of socket ids
-const users: { [key: string]: string[] } = {}
 
-io.on('connection', (socket) => {
+const users: {
+  [key: string]: {
+    sockets: string[]
+    isActiveChat: boolean
+  }
+} = {}
+
+async function broadcastOnlineStatus() {
+  for (const uid in users) {
+    // tìm những bạn chat đã accepted
+    const conversations = await Conversation.find({
+      type: 'private',
+      participants: {
+        $elemMatch: { user: uid, status: 'accepted' }
+      }
+    })
+    console.log(`Danh sách conversation của : ${uid}`, conversations)
+
+    const acceptedMembers = []
+
+    conversations.forEach((conv) => {
+      conv.participants.forEach((p) => {
+        if (p.user.toString() !== uid && p.status === 'accepted') {
+          acceptedMembers.push(p.user.toString())
+        }
+      })
+    })
+
+    const uniqueUserIds = [...new Set(acceptedMembers)]
+
+    // chỉ lấy user nào đang active-in-chat
+    const activeOnlineUsers = uniqueUserIds.filter((id) => users[id]?.isActiveChat === true)
+
+    // gửi cho tất cả socket của user uid
+    users[uid].sockets.forEach((sockId) => {
+      io.to(sockId).emit('online-users', activeOnlineUsers)
+    })
+  }
+}
+
+io.on('connection', async (socket) => {
   const rawUserId = socket.handshake.query?.user_id
   const user_id = Array.isArray(rawUserId) ? rawUserId[0] : rawUserId
   if (!user_id || typeof user_id !== 'string') return
   if (!users[user_id]) {
-    users[user_id] = []
+    users[user_id] = { sockets: [], isActiveChat: false }
   }
-  users[user_id].push(socket.id)
+  users[user_id].sockets.push(socket.id)
 
   console.log('user connected', user_id, socket.id)
   console.log(users)
 
   socket.on('disconnect', () => {
-    console.log('user disconnected', user_id, socket.id)
-    users[user_id] = users[user_id].filter((id) => id !== socket.id)
-    if (users[user_id].length === 0) {
+    users[user_id].sockets = users[user_id].sockets.filter((id) => id !== socket.id)
+
+    if (users[user_id].sockets.length === 0) {
       delete users[user_id]
     }
+
+    broadcastOnlineStatus()
   })
 
   socket.on('join-conversation', (conversationId) => {
     socket.join(conversationId)
-    console.log('ROOOM  : ', io.sockets.adapter.rooms)
   })
 
   socket.on('leave-conversation', (conversationId) => {
@@ -81,56 +120,29 @@ io.on('connection', (socket) => {
   })
 
   socket.on('send-message', async (msg, callback) => {
-    const { conversation, sender } = msg
+    const { conversation, temp_id } = msg
     try {
-      const conv = await Conversation.findById(conversation)
-      if (!conv) {
-        callback({ status: 'error', message: 'Conversation not found' })
-        return
-      }
-
-      const participant = conv.participants.find((p) => p.user.toString() === sender.toString())
-
-      if (participant && participant.is_deleted) {
-        await Conversation.updateOne(
-          {
-            _id: conversation,
-            'participants.user': sender
-          },
-          {
-            $set: {
-              'participants.$.is_deleted': false,
-              'participants.$.deleted_at': null
-            }
-          }
-        )
-      }
-
       const created = await Message.create(msg)
-
       const resend_msg = await Message.findById(created._id)
         .populate({ path: 'sender', select: 'username profilePicture' })
         .populate({
           path: 'replyTo',
           select: 'content media type sender',
-          populate: { path: 'sender', select: 'fullname' }
+          populate: {
+            path: 'sender',
+            select: 'fullname'
+          }
         })
         .exec()
-
       if (!resend_msg) {
-        callback({ status: 'error', message: 'Message not found after creation' })
+        callback({ status: 'error', message: 'message not found after create' })
         return
       }
-
-      await Conversation.findByIdAndUpdate(conversation, { $set: { lastMessage: resend_msg._id } }).exec()
-
+      await Conversation.findByIdAndUpdate(conversation, { $set: { last_message: resend_msg._id } }).exec()
       const msgObj = JSON.parse(JSON.stringify(resend_msg))
-      io.to(conversation).emit('new-message', msgObj)
-
-      callback({ status: 'ok', data: created._id })
+      io.to(conversation).emit('new-message', { msg: msgObj, temp_id })
     } catch (err) {
-      console.error('Error in send-message:', err)
-      callback({ status: 'error', message: 'Error sending message' })
+      callback({ status: 'error', message: 'lỗi gửi tin nhắn' })
     }
   })
 
@@ -139,7 +151,6 @@ io.on('connection', (socket) => {
     try {
       const deletedMessage = await Message.findByIdAndDelete(messageId).exec()
       const msgObj = JSON.parse(JSON.stringify(deletedMessage))
-      console.log('Deleted message:', deletedMessage)
       if (deletedMessage) {
         io.to(conversation).emit('message-deleted', msgObj)
       }
@@ -152,12 +163,31 @@ io.on('connection', (socket) => {
     socket.to(roomId).emit('display_typing', { ...data })
   })
 
-  socket.on('user-online', (data) => {
-    const { userId } = data
-    const socketIds = users[userId] || []
-    socketIds.forEach((id) => {
-      io.to(id).emit('friend-online', { userId })
+  socket.on('seen-message', async (data) => {
+    const { conversationId, userId, messageId } = data
+
+    await Message.findByIdAndUpdate(messageId, { $addToSet: { seenBy: userId } }).exec()
+
+    socket.to(conversationId).emit('message-seen', {
+      conversationId,
+      userId,
+      messageId
     })
+  })
+
+  // User Online
+  socket.join(user_id)
+
+  socket.on('active-in-chat', () => {
+    users[user_id].isActiveChat = true
+    console.log(user_id, 'đang active chat')
+    broadcastOnlineStatus()
+  })
+
+  socket.on('off-active-in-chat', () => {
+    users[user_id].isActiveChat = false
+    console.log(user_id, 'rời trang chat')
+    broadcastOnlineStatus()
   })
 })
 httpServer.listen(PORT, () => {

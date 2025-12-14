@@ -37,13 +37,13 @@ const messageSchema = new Schema<IMessage>(
       thumbnail: { type: String }
     },
     replyTo: { type: Schema.Types.ObjectId, ref: 'Message' },
+    seenBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     reactions: [
       {
         user: { type: Schema.Types.ObjectId, ref: 'User' },
         emoji: { type: String }
       }
     ],
-    seenBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     deletedBy: [{ type: Schema.Types.ObjectId, ref: 'User' }]
   },
   { timestamps: true }

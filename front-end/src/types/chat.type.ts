@@ -1,11 +1,5 @@
 import { User } from './user.type'
 
-// export interface Conversations {
-//   id?: string
-//   limit?: number
-//   page?: number
-// }
-
 export interface Message {
   _id?: string
   sender: User
@@ -13,6 +7,7 @@ export interface Message {
   content?: string
   conversation: string
   media?: any
+  seenBy?: string[]
   replyTo?: Message
   createdAt?: string
   updatedAt?: string

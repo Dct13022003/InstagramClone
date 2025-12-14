@@ -3,14 +3,19 @@ import { Skeleton } from '../../../components/ui/skeleton'
 import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar'
 import { NavLink } from 'react-router-dom'
 import { useSearch } from '../../../hooks/useSearch'
+import { useSearchContext } from '../SearchContext'
 
 interface SearchPanelProps {
   searchOpen: boolean
   open: boolean
+  searchButtonRef: React.RefObject<HTMLButtonElement>
 }
 
-export default function SearchOpen({ searchOpen, open }: SearchPanelProps) {
+export default function SearchOpen({ searchOpen, open, searchButtonRef }: SearchPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const { handleChange, searchUsersQuery, searchHistoryQuery, saveHistory } = useSearch()
+  const { setSearchOpen } = useSearchContext()
 
   useEffect(() => {
     if (searchOpen) {
@@ -19,16 +24,35 @@ export default function SearchOpen({ searchOpen, open }: SearchPanelProps) {
     }
   }, [searchOpen])
 
-  const { handleChange, searchUsersQuery, searchHistoryQuery, saveHistory } = useSearch()
+  useEffect(() => {
+    if (!searchOpen) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node
+
+      if (panelRef.current?.contains(target) || searchButtonRef.current?.contains(target)) {
+        return // ⛔ KHÔNG đóng
+      }
+
+      setSearchOpen(false)
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [searchOpen])
 
   return (
     <div
+      ref={panelRef}
       className={`
           fixed top-0 h-full bg-white z-1 w-[450px]
           transform transition-transform duration-500 ease-out rounded-br-lg rounded-tr-lg
            ${searchOpen ? 'translate-x-2 ' : '-translate-x-full'}
         `}
-      style={{ left: open ? 'var(--sidebar-width, 240px)' : '64px', boxShadow: '0 0 10px 8px rgba(0, 0, 0, 0.15)' }}
+      style={{ left: open ? 'var(--sidebar-width, 140px)' : '64px', boxShadow: '0 0 10px 8px rgba(0, 0, 0, 0.15)' }}
     >
       <div className='p-6'>
         <h2 className='text-2xl font-semibold my-2 pb-9'>Tìm kiếm</h2>
@@ -87,7 +111,13 @@ export default function SearchOpen({ searchOpen, open }: SearchPanelProps) {
               <div className='space-y-2 pt-0'>
                 {Array.isArray(searchHistoryQuery.data) &&
                   searchHistoryQuery.data.map((user) => (
-                    <NavLink to={`/${user.username}`} onClick={() => saveHistory.mutate(user._id as string)}>
+                    <NavLink
+                      to={`/${user.username}`}
+                      onClick={() => {
+                        saveHistory.mutate(user._id as string)
+                        setSearchOpen(false)
+                      }}
+                    >
                       <div key={user._id} className='flex items-center justify-between hover:bg-gray-100 px-6 '>
                         <div className='flex items-center space-x-4'>
                           <Avatar className='my-2 w-13 h-13'>

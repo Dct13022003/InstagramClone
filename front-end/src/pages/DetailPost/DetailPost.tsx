@@ -344,7 +344,7 @@ export default function DetailPost({ layout = 'full' }: { layout?: 'full' | 'mod
             <div className='grid grid-cols-3 gap-2 md:gap-[3px]'>
               {posts.map((post) => (
                 <NavLink to={`/${username}/p/${post._id}`} className='w-full h-full block'>
-                  <div key={post._id} className='w-full aspect-[3/4] bg-gray-200 relative cursor-pointer group '>
+                  <div key={post._id} className='relative w-full aspect-[3/4] bg-gray-200  cursor-pointer group '>
                     <img src={post.images[0]} alt={post.caption} className='w-full h-full object-cover' />
 
                     <div className='absolute inset-0 bg-black/0 group-hover:bg-black/50 transition flex items-center justify-center'>

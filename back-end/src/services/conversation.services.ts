@@ -51,7 +51,7 @@ class ConversationService {
       }
     })
       .select('_id type last_message updatedAt createdAt')
-      .populate({ path: 'last_message' })
+      .populate({ path: 'last_message', populate: { path: 'sender', select: '_id' } })
       .populate({ path: 'participants.user', select: 'username profilePicture' })
       .sort({ updatedAt: -1 })
       .skip((page - 1) * limit)

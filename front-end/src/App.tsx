@@ -3,11 +3,13 @@ import useRouteElement from './useRouteElement'
 import ModalPostDetail from './components/ModalPostDetail'
 import type { Location } from 'react-router-dom'
 import ModalCreatePost from './components/Modal'
+import { useActiveChatStatus } from './pages/Chat/hook/useConversationSocket'
 
 function App() {
   const location = useLocation()
   const state = location.state as { backgroundLocation?: Location<any> }
   const routeElements = useRouteElement(state?.backgroundLocation)
+  useActiveChatStatus()
   return (
     <>
       {routeElements}

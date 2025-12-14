@@ -22,7 +22,7 @@ export default function Home() {
 
   return (
     <div className='w-full flex '>
-      <main className=' max-w-3xl w-full mx-auto border-l flex justify-center'>
+      <main className='max-w-2xl w-full mx-auto border-l flex justify-center'>
         <div className='flex-1 max-w-xl '>
           <InfiniteScroll
             dataLength={newFeeds.length}
@@ -37,10 +37,10 @@ export default function Home() {
           </InfiniteScroll>
         </div>
       </main>
-      <div className='flex-1 px-4 mt-9'>
+      <div className='flex-1 px-4 mt-9 lg:block hidden max-w-sm'>
         <div className='flex justify-between'>
-          <div className='text-gray-500'>
-            <span>gợi ý cho bạn</span>
+          <div className='font-semibold'>
+            <span>Gợi ý cho bạn</span>
           </div>
           <div>
             <NavLink to=''>
@@ -49,34 +49,41 @@ export default function Home() {
           </div>
         </div>
         <div className='py-3'>
-          {suggestFollows?.map((user) => (
-            <div key={user._id} className='flex items-center justify-between'>
-              <div>
-                <Avatar className='my-6'>
-                  <AvatarImage className='object-cover w-10 h-10 ' src={user.profilePicture} />
-                  <AvatarFallback />
-                </Avatar>
-              </div>
-              <div className='flex-row'>
-                <div>
-                  <span className='font-semibold'>{user.username}</span>
-                </div>
-                <div className='text-sm text-gray-500'>
-                  {user.mutualFollowers?.length > 0 ? (
+          <ul>
+            {suggestFollows?.map((user) => (
+              <li className='mb-3' key={user._id}>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <Avatar>
+                      <AvatarImage className='object-cover w-15 h-15 ' src={user?.profilePicture} />
+                      <AvatarFallback />
+                    </Avatar>
+                  </div>
+                  <div className='flex-row'>
                     <div>
-                      Có {user.mutualFollowers[0].username} theo dõi
-                      {user.mutualFollowers.length > 1 && <span> và {user.mutualFollowers.length - 1} người khác</span>}
+                      <span className='font-semibold'>{user.username}</span>
                     </div>
-                  ) : (
-                    <div>Gợi ý cho bạn</div>
-                  )}
+                    <div className='text-sm text-gray-500'>
+                      {user.mutualFollowers?.length > 0 ? (
+                        <div>
+                          Có {user.mutualFollowers[0].username} theo dõi
+                          {user.mutualFollowers.length > 1 && (
+                            <span> và {user.mutualFollowers.length - 1} người khác</span>
+                          )}
+                        </div>
+                      ) : (
+                        <div>Gợi ý cho bạn</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <button className='text-blue-500 text-[12px] font-semibold'>Theo dõi</button>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <button className='text-blue-500'>Theo dõi</button>
-              </div>
-            </div>
-          ))}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>

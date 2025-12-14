@@ -16,6 +16,7 @@ export function useMessageActions({ conversationId, currentUser, profile }: UseM
   const { replyingToMessage, setReplyingToMessage } = useContext(ChatContext)
   const [pendingQueue, setPendingQueue] = useState<any[]>([])
   const { socket } = useContext(AppContext)
+
   const optimisticUi = (payload: {
     content?: string
     type: 'text' | 'image' | 'video' | 'file'
