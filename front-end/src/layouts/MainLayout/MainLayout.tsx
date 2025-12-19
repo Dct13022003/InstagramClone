@@ -3,6 +3,7 @@ import AppSidebar from '../../components/App-sidebar'
 import { SidebarProvider, useSidebar } from '../../components/ui/sidebar'
 import { useEffect, useState } from 'react'
 import { SearchContext } from './SearchContext'
+import SearchOpen from './component/SearchOpen'
 
 function SidebarAutoCollapse({ searchOpen }: { searchOpen: boolean }) {
   const { pathname } = useLocation()
@@ -33,6 +34,7 @@ export default function MainLayout() {
       <SidebarProvider sidebar={<AppSidebar />} isChatPage={isChatPage}>
         <SidebarAutoCollapse searchOpen={searchOpen} />
         <Outlet />
+        <SearchOpen />
       </SidebarProvider>
     </SearchContext.Provider>
   )

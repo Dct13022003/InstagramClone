@@ -5,6 +5,7 @@ import FeedCard from './components/FeedCard'
 import { NavLink } from 'react-router-dom'
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { suggestFollow } from '../../apis/follow.api'
+import { UserStories } from './components/UserStories'
 
 export default function Home() {
   const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
@@ -22,7 +23,8 @@ export default function Home() {
 
   return (
     <div className='w-full flex '>
-      <main className='max-w-2xl w-full mx-auto border-l flex justify-center'>
+      <main className='max-w-2xl w-full mx-auto border-l flex flex-col items-center'>
+        <UserStories />
         <div className='flex-1 max-w-xl '>
           <InfiniteScroll
             dataLength={newFeeds.length}

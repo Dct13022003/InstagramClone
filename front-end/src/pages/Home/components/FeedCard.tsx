@@ -209,7 +209,7 @@ export default function FeedCard({ feed }: FeedCardProps) {
 
         {/* Video / Hình ảnh */}
         <div className='bg-black rounded-sm overflow-hidden'>
-          <img src={feed.images[0]} className='w-full h-auto' />
+          <img src={feed.images[0]} loading='lazy' className='w-full h-auto' />
         </div>
 
         <div className='px-2'>

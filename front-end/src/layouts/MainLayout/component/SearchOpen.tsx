@@ -4,16 +4,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avat
 import { NavLink } from 'react-router-dom'
 import { useSearch } from '../../../hooks/useSearch'
 import { useSearchContext } from '../SearchContext'
+import { useSidebar } from '../../../components/ui/sidebar'
 
-interface SearchPanelProps {
-  searchOpen: boolean
-  open: boolean
-  searchButtonRef: React.RefObject<HTMLButtonElement>
+type SearchOpenProps = {
+  isChatPage?: boolean
 }
 
-export default function SearchOpen({ searchOpen, open, searchButtonRef }: SearchPanelProps) {
+export default function SearchOpen(isChatPage: SearchOpenProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
+  const { open } = useSidebar()
+  const { searchOpen } = useSearchContext()
   const { handleChange, searchUsersQuery, searchHistoryQuery, saveHistory } = useSearch()
   const { setSearchOpen } = useSearchContext()
 
@@ -31,7 +32,7 @@ export default function SearchOpen({ searchOpen, open, searchButtonRef }: Search
       const target = e.target as Node
 
       if (panelRef.current?.contains(target) || searchButtonRef.current?.contains(target)) {
-        return // ⛔ KHÔNG đóng
+        return
       }
 
       setSearchOpen(false)
@@ -48,11 +49,15 @@ export default function SearchOpen({ searchOpen, open, searchButtonRef }: Search
     <div
       ref={panelRef}
       className={`
-          fixed top-0 h-full bg-white z-1 w-[450px]
+          fixed top-0 h-full z-20
+           bg-white w-[450px]
           transform transition-transform duration-500 ease-out rounded-br-lg rounded-tr-lg
-           ${searchOpen ? 'translate-x-2 ' : '-translate-x-full'}
+           ${searchOpen ? 'translate-x-2' : '-translate-x-full'}
         `}
-      style={{ left: open ? 'var(--sidebar-width, 140px)' : '64px', boxShadow: '0 0 10px 8px rgba(0, 0, 0, 0.15)' }}
+      style={{
+        left: open ? '0' : '64px',
+        boxShadow: '0 0 10px 8px rgba(0, 0, 0, 0.15)'
+      }}
     >
       <div className='p-6'>
         <h2 className='text-2xl font-semibold my-2 pb-9'>Tìm kiếm</h2>

@@ -12,13 +12,13 @@ import {
 import { Collapsible, CollapsibleTrigger } from '../ui/collapsible'
 import { NavLink } from 'react-router-dom'
 import { useContext, useRef } from 'react'
-import SearchOpen from '../../layouts/MainLayout/component/SearchOpen'
 import { Explore, Message } from '../Icons/Icons'
 import { usePostModalCreatePost } from '../../store/useCreatePostModal.store'
 import { useIsMobile } from '../../hooks/use-mobile'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { AppContext } from '../../context/app.context'
 import { useSearchContext } from '../../layouts/MainLayout/SearchContext'
+import SearchOpen from '../../layouts/MainLayout/component/SearchOpen'
 
 const items = [
   {
@@ -65,14 +65,18 @@ const items = [
   }
 ]
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { searchOpen, setSearchOpen } = useSearchContext()
+  const { setSearchOpen } = useSearchContext()
+  const { setOpen } = useSidebar()
   const { profile } = useContext(AppContext)
-  const { open } = useSidebar()
   const { open: openModal } = usePostModalCreatePost()
   const isMobile = useIsMobile()
   const searchButtonRef = useRef<HTMLButtonElement>(null)
   const handleSearchClick = () => {
-    setSearchOpen((prev) => !prev)
+    setSearchOpen((prev) => {
+      const next = !prev
+      setOpen(!next)
+      return next
+    })
   }
 
   return (
@@ -164,7 +168,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-      {!isMobile && <SearchOpen searchOpen={searchOpen} open={open} searchButtonRef={searchButtonRef} />}
+      
     </div>
   )
 }

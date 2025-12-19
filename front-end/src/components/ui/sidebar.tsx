@@ -57,7 +57,6 @@ function SidebarProvider({
 }) {
   const isMobile = useIsMobile()
   const [openMobile, setOpenMobile] = React.useState(false)
-
   const [_open, _setOpen] = React.useState(defaultOpen)
   const open = openProp ?? _open
   const setOpen = React.useCallback(
@@ -112,7 +111,7 @@ function SidebarProvider({
           {/* Sidebar */}
           <div
             className={cn(
-              'fixed',
+              'fixed z-30',
               'transition-all duration-300',
               open ? 'w-[var(--sidebar-width)]' : 'w-[var(--sidebar-width-icon)]',
               className
