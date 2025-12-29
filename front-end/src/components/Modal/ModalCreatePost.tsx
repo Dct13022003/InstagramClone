@@ -39,6 +39,11 @@ export function ModalCreatePost() {
   }
 
   const handleClose = () => {
+    if (previews.length) {
+      previews.forEach((preview) => {
+        URL.revokeObjectURL(preview)
+      })
+    }
     setPreviews([])
     reset()
     setStep(1)

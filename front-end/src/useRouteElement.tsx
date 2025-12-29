@@ -12,6 +12,8 @@ import Saves from './pages/Profile/components/Saves'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import DetailPost from './pages/DetailPost'
+import StoryViewer from './pages/Home/components/StoryViewer'
+import ModalPostDetail from './components/ModalPostDetail'
 
 function ProtectedRoute() {
   const { isAuthenticated } = useContext(AppContext)
@@ -25,7 +27,6 @@ function RejectedRoute() {
 
 export default function useRouteElement(backgroundLocation?: Location<any>) {
   const location = useLocation()
-
   const protectedRoutes = {
     element: <ProtectedRoute />,
     children: [
@@ -53,6 +54,10 @@ export default function useRouteElement(backgroundLocation?: Location<any>) {
               { path: 'saved', element: <Saves /> },
               { path: 'tagged', element: <Saves /> }
             ]
+          },
+          {
+            path: '/stories/:username',
+            element: <StoryViewer />
           }
         ]
       }
@@ -66,5 +71,22 @@ export default function useRouteElement(backgroundLocation?: Location<any>) {
       { path: path.register, element: <Register /> }
     ]
   }
-  return useRoutes([protectedRoutes, rejectedRoutes], backgroundLocation || (location as Location))
+
+  const modalRoutes = {
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: '/stories/:username',
+        element: <StoryViewer />
+      },
+      {
+        path: '/:username/p/:postId',
+        element: <ModalPostDetail />
+      }
+    ]
+  }
+  return useRoutes(
+    [protectedRoutes, rejectedRoutes, ...(backgroundLocation ? [modalRoutes] : [])],
+    backgroundLocation || (location as Location)
+  )
 }

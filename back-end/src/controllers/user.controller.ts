@@ -4,7 +4,6 @@ import { USER_MESSAGES } from '~/constants/message'
 import { TokenPayload } from '~/models/request/user.request'
 import { User, IUser } from '~/models/user.models'
 import { mediaService } from '~/services/media.services'
-import { searchService } from '~/services/search.services'
 import userService from '~/services/user.services'
 
 export const registerController = async (req: Request, res: Response) => {

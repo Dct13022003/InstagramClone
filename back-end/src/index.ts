@@ -17,6 +17,7 @@ import { Message } from './models/message.models'
 import commentsRouter from './routers/comment.routers'
 import searchRouter from './routers/search.routers'
 import { Conversation } from './models/conversation.models'
+import storyRouter from './routers/story.routers'
 // import '~/utils/fake'
 
 dotenv.config({})
@@ -40,6 +41,7 @@ app.use('/medias', mediasRouter)
 app.use('/conversations', conversationRouter)
 app.use('/comments', commentsRouter)
 app.use('/search', searchRouter)
+app.use('/stories', storyRouter)
 app.use(defaultErrorHandler)
 
 const httpServer = createServer(app)

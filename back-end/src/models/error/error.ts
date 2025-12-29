@@ -4,7 +4,7 @@ type ErrorType = Record<
   string,
   {
     msg: string
-    lacation?: string
+    location?: string
     value?: any
     path?: string
     [key: string]: any

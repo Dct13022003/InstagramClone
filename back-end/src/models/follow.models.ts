@@ -12,4 +12,5 @@ const followSchema = new Schema<IFollow>(
     timestamps: true
   }
 )
+followSchema.index({ follower: 1 })
 export const Follow = mongoose.model<IFollow>('Follow', followSchema)

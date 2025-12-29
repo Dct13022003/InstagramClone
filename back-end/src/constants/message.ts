@@ -79,3 +79,9 @@ export const COMMENT_MESSAGES = {
   LIKE_COMMENT_SUCCESS: 'Like comment success',
   UNLIKE_COMMENT_SUCCESS: 'Unlike comment success'
 } as const
+
+export const STORY_MESSAGES = {
+  CREATE_STORY_SUCCESS: 'Create story success',
+  GET_STORIES_SUCCESS: 'Get stories success',
+  GET_STORY_FEED_SUCCESS: 'Get story feed success'
+} as const

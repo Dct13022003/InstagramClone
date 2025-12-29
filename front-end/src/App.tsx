@@ -1,9 +1,10 @@
-import { useLocation, Routes, Route } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import useRouteElement from './useRouteElement'
-import ModalPostDetail from './components/ModalPostDetail'
+
 import type { Location } from 'react-router-dom'
-import ModalCreatePost from './components/Modal'
+
 import { useActiveChatStatus } from './pages/Chat/hook/useConversationSocket'
+import ModalCreatePost from './components/Modal'
 
 function App() {
   const location = useLocation()
@@ -13,11 +14,6 @@ function App() {
   return (
     <>
       {routeElements}
-      {state?.backgroundLocation && (
-        <Routes>
-          <Route path='/:username/p/:postId' element={<ModalPostDetail />} />
-        </Routes>
-      )}
       <ModalCreatePost />
     </>
   )
