@@ -9,16 +9,15 @@ import {
   SidebarMenuItem,
   useSidebar
 } from '../ui/sidebar'
-import { Collapsible, CollapsibleTrigger } from '../ui/collapsible'
+import { AnimatePresence, motion } from 'framer-motion'
+
 import { NavLink } from 'react-router-dom'
 import { useContext, useRef } from 'react'
 import { Explore, Message } from '../Icons/Icons'
 import { usePostModalCreatePost } from '../../store/useCreatePostModal.store'
-import { useIsMobile } from '../../hooks/use-mobile'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { AppContext } from '../../context/app.context'
 import { useSearchContext } from '../../layouts/MainLayout/SearchContext'
-import SearchOpen from '../../layouts/MainLayout/component/SearchOpen'
 
 const items = [
   {
@@ -69,7 +68,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { setOpen } = useSidebar()
   const { profile } = useContext(AppContext)
   const { open: openModal } = usePostModalCreatePost()
-  const isMobile = useIsMobile()
+  const { state, isMobile } = useSidebar()
   const searchButtonRef = useRef<HTMLButtonElement>(null)
   const handleSearchClick = () => {
     setSearchOpen((prev) => {
@@ -81,56 +80,80 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <div>
-      <Sidebar collapsible='icon' {...props}>
+      <Sidebar collapsible='icon' {...props} variant='sidebar'>
         <SidebarContent>
-          <SidebarGroup className='h-full justify-around items-center'>
-            <SidebarMenu className={`h-full gap-2 `}>
-              <SidebarGroupLabel className={`text-xl mb-5 ${isMobile ? 'hidden' : ''}`}>Application</SidebarGroupLabel>
+          <SidebarGroup>
+            <SidebarMenu className='pl-2 pt-7'>
+              <SidebarGroupLabel className={` mb-5  ${isMobile ? 'hidden' : ''}`}>
+                <motion.div layout>
+                  <AnimatePresence mode='wait'>
+                    {state === 'collapsed' ? (
+                      <motion.div
+                        key='icon'
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                      >
+                        <img src='/instagram-svgrepo-com.svg' alt='logo' className='w-10' />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key='logo'
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <img src='/Instagram_logo.svg.png' alt='logo' className='w-30' />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              </SidebarGroupLabel>
               {!isMobile &&
                 items.map((item) => (
-                  <Collapsible key={item.title} defaultOpen={item.isActive} className='group/collapsible' asChild>
-                    <SidebarMenuItem className='h-1/8 flex flex-1 items-center '>
-                      <CollapsibleTrigger asChild>
-                        {item.title === 'Tìm kiếm' ? (
-                          <SidebarMenuButton
-                            ref={searchButtonRef}
-                            tooltip={item.title}
-                            className={`w-full h-10 group-data-[collapsible=icon]:size-12!`}
-                            asChild
-                            onClick={handleSearchClick}
-                          >
-                            <button type='button'>
-                              {item.icon && <item.icon className='!w-7 !h-7' />}
-                              <span className={`ml-3 text-xl truncate ${isMobile ? 'hidden' : ''}`}>{item.title}</span>
-                            </button>
-                          </SidebarMenuButton>
-                        ) : (
-                          <SidebarMenuButton
-                            tooltip={item.title}
-                            className='w-full h-10 group-data-[collapsible=icon]:size-12!'
-                            asChild
-                            onClick={() => {
-                              setSearchOpen(false)
-                              if (item.title === 'Tạo') {
-                                openModal()
-                              }
-                            }}
-                          >
-                            <NavLink to={item.url}>
-                              {item.icon && <item.icon className='!w-7 !h-7' />}
-                              <span className={`ml-3 text-xl truncate `}>{item.title}</span>
-                            </NavLink>
-                          </SidebarMenuButton>
-                        )}
-                      </CollapsibleTrigger>
-                    </SidebarMenuItem>
-                  </Collapsible>
+                  <SidebarMenuItem className='flex items-center h-12 p-1'>
+                    {item.title === 'Tìm kiếm' ? (
+                      <SidebarMenuButton
+                        ref={searchButtonRef}
+                        tooltip={item.title}
+                        className='w-full  hover:cursor-pointer '
+                        asChild
+                        size={'lg'}
+                        onClick={handleSearchClick}
+                      >
+                        <button type='button'>
+                          {item.icon && <item.icon className='!w-7 !h-7' />}
+                          <span className={`ml-3 text-base truncate ${isMobile ? 'hidden' : ''}`}>{item.title}</span>
+                        </button>
+                      </SidebarMenuButton>
+                    ) : (
+                      <SidebarMenuButton
+                        tooltip={item.title}
+                        className='w-full '
+                        asChild
+                        size={'lg'}
+                        onClick={() => {
+                          setSearchOpen(false)
+                          if (item.title === 'Tạo') {
+                            openModal()
+                          }
+                        }}
+                      >
+                        <NavLink to={item.url}>
+                          {item.icon && <item.icon className='!w-7 !h-7' />}
+                          <span className={`ml-3 text-base truncate `}>{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    )}
+                  </SidebarMenuItem>
                 ))}
               {isMobile &&
                 items.map((item) => (
                   <>
                     {item.title !== 'Tìm kiếm' && item.title !== 'Thông báo' && (
-                      <SidebarMenuItem className='h-1/8 flex flex-1 items-center '>
+                      <SidebarMenuItem className='flex items-center h-12 justify-center'>
                         <SidebarMenuButton
                           tooltip={item.title}
                           className='w-full h-10 group-data-[collapsible=icon]:size-12! justify-center'
@@ -147,7 +170,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     )}
                   </>
                 ))}
-              <SidebarMenuItem className='flex-1'>
+              <SidebarMenuItem className='flex-1 h-12 flex items-center'>
                 <SidebarMenuButton
                   className={`w-full h-10 group-data-[collapsible=icon]:size-12!`}
                   asChild
@@ -159,7 +182,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         <AvatarImage width={1} height={1} className='object-cover' src={profile?.profilePicture} />
                         <AvatarFallback />
                       </Avatar>
-                      {!isMobile && <span className='ml-1 text-xl'>Trang cá nhân</span>}
+                      {!isMobile && <span className='ml-1 text-base'>Trang cá nhân</span>}
                     </NavLink>
                   </button>
                 </SidebarMenuButton>
@@ -168,7 +191,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-      
     </div>
   )
 }

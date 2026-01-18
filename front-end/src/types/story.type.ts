@@ -14,10 +14,19 @@ export type StoryResponse = {
   stories: Story[]
 }
 
-export type StoryFeed = {
+export type StoryBar = {
   _id: string
   lastStoryAt: string
   storyCount: number
   hasUnseen: number
   author: User
+}
+
+export type StoryGroup = {
+  author: {
+    _id: string
+    username: string
+    avatar: string
+  }
+  stories: Story[]
 }

@@ -19,11 +19,11 @@ export const uploadAvatar = async (body: FormData) => {
   return data
 }
 
-export const userPosts = async (username: string, page: number, limit = 6) => {
+export const userPosts = async (username: string, cursor?: string | null, limit = 9) => {
   const { data } = await http.get<SuccessResponse<ListPostDetail>>(`users/${username}/posts`, {
     params: {
       limit,
-      page
+      cursor
     }
   })
   return data.result

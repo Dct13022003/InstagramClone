@@ -36,7 +36,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (isAuthenticated && profile?._id) {
       if (!socket) {
-        const newSocket = connectSocket(profile._id)
+        const newSocket = connectSocket()
         newSocket.on('connect', () => console.log('✅ Socket connected'))
         newSocket.on('disconnect', () => console.log('❌ Socket disconnected'))
 

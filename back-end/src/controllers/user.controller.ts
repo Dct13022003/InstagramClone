@@ -141,9 +141,9 @@ export const uploadAvatarController = async (req: Request, res: Response) => {
 
 export const getAllUserPostController = async (req: Request, res: Response) => {
   const { user_name } = req.params
-  const page = parseInt(req.query.page as string) || 1
-  const limit = parseInt(req.query.limit as string) || 6
-  const result = await userService.getAllPostByUser(user_name, page, limit)
+  const cursor = req.query.cursor as string | undefined
+  const limit = parseInt(req.query.limit as string)
+  const result = await userService.getAllPostByUser(user_name, cursor, limit)
   return res.json({
     result
   })

@@ -7,7 +7,7 @@ import {
   CarouselNext,
   CarouselPrevious
 } from '../../../components/ui/carousel'
-import { useStoryFeed } from '../hook/useStories'
+import { useStoriesBar } from '../hook/useStories'
 import { AppContext } from '../../../context/app.context'
 import { CirclePlus } from 'lucide-react'
 import { ModalCreateStory } from './StoryModal'
@@ -16,7 +16,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 export function UserStories() {
   const { profile } = useContext(AppContext)
-  const { data: stories, isLoading } = useStoryFeed()
+  const { data: storiesBar, isLoading } = useStoriesBar()
   const [isOpen, setIsOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
@@ -52,8 +52,8 @@ export function UserStories() {
             <CirclePlus className='absolute bottom-1 right-1 text-white ' fill='black' />
           </CarouselItem>
 
-          {stories &&
-            stories.map((story) => (
+          {storiesBar &&
+            storiesBar.map((story) => (
               <CarouselItem
                 key={story._id}
                 onClick={() => openStory(story.author.username as string)}
@@ -69,8 +69,12 @@ export function UserStories() {
               </CarouselItem>
             ))}
         </CarouselContent>
-        <CarouselPrevious className='left-1' />
-        <CarouselNext className='right-1' />
+        {storiesBar && storiesBar?.length > 5 && (
+          <>
+            <CarouselPrevious className='left-1' />
+            <CarouselNext className='right-1' />
+          </>
+        )}
       </Carousel>
       <ModalCreateStory isOpen={isOpen} handleClose={() => setIsOpen(false)} />
     </>

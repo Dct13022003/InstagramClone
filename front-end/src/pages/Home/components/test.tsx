@@ -1,93 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { Avatar, AvatarImage } from '../../../components/ui/avatar'
-import { Ellipsis, Pause, Play } from 'lucide-react'
-export type StoryItem = {
-  _id: string
-  mediaUrl: string
-  type: 'image' | 'video'
-  duration?: number
-}
-
-export type StoryGroup = {
-  author: {
-    _id: string
-    username: string
-    avatar: string
-  }
-  stories: StoryItem[]
-}
-
-const stories: StoryGroup[] = [
-  {
-    author: {
-      _id: 'u1',
-      username: 'alice',
-      avatar: 'https://i.pravatar.cc/150?img=1'
-    },
-    stories: [
-      {
-        _id: 's1',
-        mediaUrl: 'https://placehold.co/400x700/png',
-        type: 'image',
-        duration: 5000
-      },
-      {
-        _id: 's2',
-        mediaUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
-        type: 'video',
-        duration: 8000
-      }
-    ]
-  },
-  {
-    author: {
-      _id: 'u2',
-      username: 'bob',
-      avatar: 'https://i.pravatar.cc/150?img=2'
-    },
-    stories: [
-      {
-        _id: 's3',
-        mediaUrl: 'https://placehold.co/400x700/jpg',
-        type: 'image',
-        duration: 5000
-      }
-    ]
-  },
-  {
-    author: {
-      _id: 'u3',
-      username: 'charlie',
-      avatar: 'https://i.pravatar.cc/150?img=3'
-    },
-    stories: [
-      {
-        _id: 's4',
-        mediaUrl: 'https://placehold.co/400x700/png',
-        type: 'image',
-        duration: 5000
-      },
-      {
-        _id: 's5',
-        mediaUrl: 'https://placehold.co/400x700/png',
-        type: 'image',
-        duration: 5000
-      },
-      {
-        _id: 's6',
-        mediaUrl: 'https://www.w3schools.com/html/movie.mp4',
-        type: 'video',
-        duration: 7000
-      }
-    ]
-  }
-]
+import { CircleChevronLeft, CircleChevronRight, Ellipsis, Pause, Play } from 'lucide-react'
+import { StoryGroup } from '../../../types/story.type'
 
 type PropsType = {
   onClose: () => void
+  stories: StoryGroup[]
 }
 
-export default function StoryViewerA({ onClose }: PropsType) {
+export default function StoryViewerA({ onClose, stories }: PropsType) {
   const [userIndex, setUserIndex] = useState(0)
   const [storyIndex, setStoryIndex] = useState(0)
   const [progress, setProgress] = useState(0)
@@ -103,7 +24,7 @@ export default function StoryViewerA({ onClose }: PropsType) {
   useEffect(() => {
     if (isPaused || !currentStory) return
 
-    const duration = currentStory.duration ?? 5000
+    const duration = 5000
     const step = 50
     const increment = (step / duration) * 100
 
@@ -173,12 +94,23 @@ export default function StoryViewerA({ onClose }: PropsType) {
   if (!currentStory) return null
 
   return (
-    <div className='fixed inset-0 bg-black z-50 flex items-center justify-center'>
+    <div className=' inset-0 bg-[#1a1a1a] z-50 flex items-center justify-center gap-3'>
+      <div className='absolute top-4 left-4 text-white hidden sm:block'>INSTAGRAM</div>
+      <button
+        onClick={() => onClose()}
+        className='absolute top-4 right-4 text-white text-2xl font-bold hover:cursor-pointer'
+      >
+        ✕
+      </button>
       <div className='sm:hidden flex absolute inset-0  z-10'>
         <div className='w-1/2' onClick={prevStory} />
         <div className='w-1/2' onClick={nextStory} />
       </div>
 
+      <CircleChevronLeft
+        className='text-white sm:block hidden opacity-40 hover:cursor-pointer hover:opacity-100 '
+        onClick={prevStory}
+      />
       {/* Media */}
       <div className='relative h-full sm:aspect-[9/16] max-h-[90vh] sm:rounded-t-2xl overflow-hidden'>
         <div className='z-19'>
@@ -237,6 +169,10 @@ export default function StoryViewerA({ onClose }: PropsType) {
           </div>
         </div>
       </div>
+      <CircleChevronRight
+        className='text-white sm:block hidden  opacity-40 hover:cursor-pointer hover:opacity-100'
+        onClick={nextStory}
+      />
     </div>
   )
 }

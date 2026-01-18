@@ -1,5 +1,5 @@
 import { Comment, CommentResponse } from '../types/comment.type'
-import { ListPostDetail, PostDetail } from '../types/post.type'
+import { FeedResponse, PostDetail } from '../types/post.type'
 import { SuccessResponse } from '../types/utils.type'
 import http from '../utils/http'
 
@@ -66,22 +66,20 @@ export const unlikeComment = async (commentId: string): Promise<void> => {
   return response.data.result
 }
 
-export const likePost = async (postId: string): Promise<void> => {
-  const response = await http.post<SuccessResponse<void>>(`likes/posts/${postId}`)
+export const likePost = async (postId: string): Promise<{ likesCount: string; _id: string }> => {
+  const response = await http.post<SuccessResponse<{ likesCount: string; _id: string }>>(`likes/posts/${postId}`)
   return response.data.result
 }
 
-export const unlikePost = async (postId: string): Promise<void> => {
-  const response = await http.delete<SuccessResponse<void>>(`likes/posts/${postId}`)
+export const unlikePost = async (postId: string): Promise<{ likesCount: string; _id: string }> => {
+  const response = await http.delete<SuccessResponse<{ likesCount: string; _id: string }>>(`likes/posts/${postId}`)
   return response.data.result
 }
 
-export const fetchNewFeed = async (pageParam: number) => {
-  const { data } = await http.get<SuccessResponse<ListPostDetail>>(`${API_URL}/`, {
-    params: {
-      limit: 2,
-      page: pageParam
-    }
+export const fetchNewFeed = async (cursor: string | null): Promise<FeedResponse> => {
+  const { data } = await http.get<SuccessResponse<FeedResponse>>(`${API_URL}/`, {
+    params: cursor ? { cursor } : {}
   })
+
   return data.result
 }

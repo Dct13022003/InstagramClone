@@ -19,13 +19,20 @@ class LikeService {
         },
         { upsert: true, session }
       )
-
+      let updatedPost = null
       if (result.upsertedCount > 0) {
-        await Post.updateOne({ _id: new mongoose.Types.ObjectId(post_id) }, { $inc: { likesCount: 1 } }, { session })
+        updatedPost = await Post.findOneAndUpdate(
+          { _id: new mongoose.Types.ObjectId(post_id) },
+          { $inc: { likesCount: 1 } },
+          {
+            session,
+            new: true, // Quan trọng: trả về document SAU KHI đã update
+            projection: { likesCount: 1, _id: 1 } // Chỉ lấy những gì cần thiết để nhẹ máy chủ
+          }
+        )
       }
-      const likes = await Like.find()
-      console.log('All likes:', likes)
       await session.commitTransaction()
+      return updatedPost
     } catch (err) {
       await session.abortTransaction()
       throw err
@@ -44,14 +51,18 @@ class LikeService {
         { session }
       )
 
+      let updatePost = null
+
       if (result) {
-        await Post.findOneAndUpdate(
+        updatePost = await Post.findOneAndUpdate(
           { _id: new ObjectId(post_id), likesCount: { $gt: 0 } },
-          { $inc: { likesCount: -1 } }
+          { $inc: { likesCount: -1 } },
+          { new: true, session } // QUAN TRỌNG
         )
       }
 
       await session.commitTransaction()
+      return updatePost
     } catch (err) {
       await session.abortTransaction()
       throw err

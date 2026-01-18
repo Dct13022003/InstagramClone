@@ -103,8 +103,8 @@ export default function Profile() {
   }
 
   return (
-    <div className='w-full pt-8 py-8 md:mx-8'>
-      <div className='max-w-5xl mx-auto'>
+    <div className='w-full pt-8 py-8'>
+      <div className='max-w-xl mx-auto'>
         <div className='flex flex-col md:flex-row items-center md:items-start gap-6'>
           {username != profile?.username ? (
             <>
@@ -117,43 +117,23 @@ export default function Profile() {
                   />
                 </div>
               </div>
-              <div className='flex-2 space-y-5 text-center md:text-left'>
-                <div className='flex flex-col md:flex-row md:items-center gap-4'>
-                  <h2 className='text-2xl font-semibold'>{username}</h2>
-                  <div className='flex gap-2'>
-                    {profileData &&
-                      (profileData.isFollowed ? (
-                        <>
-                          <Button variant='outline' onClick={handleUnFollowUser} className='bg-gray-200 text-black'>
-                            Đang theo dõi
-                          </Button>
-                          <Button variant='outline' className='bg-gray-200 cursor-pointer'>
-                            Nhắn tin
-                          </Button>
-                        </>
-                      ) : (
-                        <Button onClick={handleFollowUser} className='bg-[#0866ff] text-white hover:bg-blue-700'>
-                          Theo dõi
-                        </Button>
-                      ))}
-
-                    <Button variant='outline' className='outline-0 cursor-pointer' size='icon'>
-                      <Settings size={18} />
-                    </Button>
-                  </div>
+              <div className='flex-2 space-y-1 text-center md:text-left'>
+                <div className='flex flex-col md:flex-row md:items-center'>
+                  <h2 className='text-2xl font-bold'>{profileData?.user.username}</h2>
                 </div>
-                <div className='flex gap-4 justify-center md:justify-start text-lg text-gray-500'>
+                <p className='text-base'>{profileData?.user?.fullname}</p>
+                <div className='flex gap-4 justify-center md:justify-start text-base '>
                   <span>
-                    <strong className='text-gray-700'>0</strong> bài viết
+                    <span className='text-black font-semibold'>0</span> bài viết
                   </span>
                   <span>
-                    <strong className='text-gray-700'>{profileData?.followerCount}</strong> người theo dõi
+                    <span className='text-gray-800 font-semibold'>{profileData?.followerCount}</span> người theo dõi
                   </span>
                   <span>
-                    Đang theo dõi <strong className='text-gray-700'>{profileData?.followingCount}</strong> người dùng
+                    Đang theo dõi <strong className='text-gray-700 font-semibold'>{profileData?.followingCount}</strong>{' '}
+                    người dùng
                   </span>
                 </div>
-                <p className='font-medium'>{profile?.fullname}</p>
               </div>
             </>
           ) : (
@@ -195,21 +175,11 @@ export default function Profile() {
                   )}
                 </div>
               </div>
-              <div className='flex-2 space-y-5 text-center md:text-left'>
+              <div className='flex-2 space-y-1 text-center md:text-left'>
                 <div className='flex flex-col md:flex-row md:items-center gap-4'>
-                  <h2 className='text-2xl font-semibold'>{username}</h2>
-                  <div className='flex gap-2'>
-                    <Button variant='outline' className='bg-gray-200  cursor-pointer'>
-                      Chỉnh sửa trang cá nhân
-                    </Button>
-                    <Button variant='outline' className='bg-gray-200  cursor-pointer'>
-                      Xem kho lưu trữ
-                    </Button>
-                    <Button variant='outline' className='outline-0  cursor-pointer' size='icon'>
-                      <Settings size={18} />
-                    </Button>
-                  </div>
+                  <h2 className='text-xl font-bold'>{username}</h2>
                 </div>
+                <p className=' pb-2'>{profile?.fullname}</p>
                 <div className='flex gap-4 justify-center md:justify-start text-lg text-gray-500'>
                   <span>
                     <strong className='text-gray-700'>0</strong> bài viết
@@ -221,11 +191,45 @@ export default function Profile() {
                     Đang theo dõi <strong className='text-gray-700'>{profileData?.followerCount}</strong> người dùng
                   </span>
                 </div>
-                <p className='font-medium'>{profile?.fullname}</p>
               </div>
             </>
           )}
         </div>
+        <div className='flex gap-2 justify-center w-full items-center mt-6 md:mt-4'>
+          {username != profile?.username ? (
+            <>
+              {profileData &&
+                (profileData.isFollowed ? (
+                  <>
+                    <Button variant='outline' onClick={handleUnFollowUser} className='bg-gray-200 text-black flex-1'>
+                      Đang theo dõi
+                    </Button>
+                    <Button variant='outline' className='bg-gray-200 cursor-pointer flex-1'>
+                      Nhắn tin
+                    </Button>
+                  </>
+                ) : (
+                  <Button onClick={handleFollowUser} className='bg-[#0866ff] text-white hover:bg-blue-700 flex-1'>
+                    Theo dõi
+                  </Button>
+                ))}
+            </>
+          ) : (
+            <>
+              <Button variant='outline' className='bg-gray-200  cursor-pointer flex-1'>
+                Chỉnh sửa trang cá nhân
+              </Button>
+              <Button variant='outline' className='bg-gray-200  cursor-pointer flex-1'>
+                Xem kho lưu trữ
+              </Button>
+            </>
+          )}
+
+          <Button variant='outline' className='outline-0 cursor-pointer' size='icon'>
+            <Settings size={18} />
+          </Button>
+        </div>
+        <div className='flex gap-2'></div>
         <div className='mt-10 flex gap-4'>
           <div className='flex flex-col items-center'>
             <div className='w-16 h-16 rounded-full border border-gray-300 flex items-center justify-center text-2xl text-gray-400'>
@@ -234,6 +238,8 @@ export default function Profile() {
             <span className='text-sm mt-1'>Mới</span>
           </div>
         </div>
+      </div>
+      <div className='md:max-w-xl lg:max-w-3xl mx-auto mt-10'>
         <div className='mt-6 md:border-b-0 border-t border-b-2'>
           <div className='grid grid-cols-3 md:flex justify-center md:space-x-20 text-sm text-gray-500  font-medium'>
             <NavLink end to='' className={({ isActive }) => (isActive ? 'tab-active border-t-2' : 'tab-inactive')}>

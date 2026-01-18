@@ -1,12 +1,16 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Dialog, DialogContent } from '../../../components/ui/dialog'
-import { useStoryUser } from '../hook/useStories'
+import { useStoriesFeed } from '../hook/useStories'
 import StoryViewerA from './test'
+import { useQueryClient } from '@tanstack/react-query'
+import { StoryBar } from '../../../types/story.type'
 
 export default function StoryViewer() {
-  const { username } = useParams()
-  const { data: stories } = useStoryUser(username as string)
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const storyBars = queryClient.getQueryData<StoryBar[]>(['storyBar'])
+  const userIds = storyBars?.map((storyBar) => storyBar._id)
+  const { data: stories } = useStoriesFeed(userIds as string[])
 
   return (
     <Dialog open onOpenChange={() => navigate(-1)}>
@@ -21,18 +25,7 @@ export default function StoryViewer() {
         rounded-none
       '
       >
-        {/* Header */}
-        <div className='absolute top-4 left-4 text-white hidden sm:block'>INSTAGRAM</div>
-
-        {/* Close */}
-        <button onClick={() => navigate(-1)} className='absolute top-4 right-4 text-white text-xl'>
-          ✕
-        </button>
-
-        {/* Media */}
-        <div className='flex items-center justify-center h-full'>
-          <StoryViewerA onClose={() => navigate(-1)} />
-        </div>
+        {stories && <StoryViewerA onClose={() => navigate(-1)} stories={stories} />}
       </DialogContent>
     </Dialog>
   )

@@ -4,6 +4,7 @@ import { ObjectId } from 'mongodb'
 import { Hashtag } from '~/models/hashtag.models'
 import { followService } from './follow.services'
 import { Like } from '~/models/like.models'
+import { interleave } from '~/utils/interleave'
 
 class PostService {
   async checkAndCreateHashtag(hashtags: string[]) {
@@ -111,112 +112,222 @@ class PostService {
     return { ...post[0], isLiked: !!isLiked }
   }
 
-  async getNewFeeds({ user_id, limit, page }: { user_id: string; limit: number; page: number }) {
-    const following_user_ids = await followService.getAllFollowing(user_id)
-    const ids = following_user_ids.map((item) => item.following)
-    ids.push(new ObjectId(user_id))
-    const posts = await Post.aggregate([
-      {
-        $match: {
-          author: { $in: ids }
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'author',
-          foreignField: '_id',
-          as: 'author'
-        }
-      },
-      {
-        $unwind: '$author'
-      },
-      {
-        $lookup: {
-          from: 'hashtags',
-          localField: 'hashtags',
-          foreignField: '_id',
-          as: 'hashtags'
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'mentions',
-          foreignField: '_id',
-          as: 'mentions'
-        }
-      },
-      {
-        $addFields: {
-          mentions: {
-            $map: {
-              input: '$mentions',
-              as: 'mention',
-              in: {
-                _id: '$$mention._id',
-                username: '$$mention.username'
-              }
-            }
-          }
-        }
-      },
-      {
-        $lookup: {
-          from: 'likes',
-          let: { postId: '$_id' },
-          pipeline: [
+  async getNewFeeds({ user_id, limit, decodedCursor }: { user_id: string; limit: number; decodedCursor: any }) {
+    const FOLLOW_LIMIT = limit
+    const RATIO = 3
+    const limitPlusOne = FOLLOW_LIMIT + 1
+
+    const followingUsers = await followService.getAllFollowing(user_id)
+    const followIds = followingUsers.map((item) => item.following)
+
+    const excludeAuthorIds = [...followIds, new ObjectId(user_id)]
+    const cursorCondition = decodedCursor
+      ? {
+          $or: [
+            { createdAt: { $lt: new Date(decodedCursor.createdAt) } },
             {
-              $match: {
-                $expr: {
-                  $and: [{ $eq: ['$post_id', '$$postId'] }, { $eq: ['$user_id', new ObjectId(user_id)] }]
+              createdAt: new Date(decodedCursor.createdAt),
+              _id: { $lt: new ObjectId(decodedCursor._id) }
+            }
+          ]
+        }
+      : {}
+
+    const followPosts = followIds.length
+      ? await Post.aggregate([
+          {
+            $match: {
+              author: { $in: excludeAuthorIds },
+              ...cursorCondition,
+              isDeleted: { $ne: true }
+            }
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'author',
+              foreignField: '_id',
+              as: 'author'
+            }
+          },
+          { $unwind: '$author' },
+
+          {
+            $lookup: {
+              from: 'hashtags',
+              localField: 'hashtags',
+              foreignField: '_id',
+              as: 'hashtags'
+            }
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'mentions',
+              foreignField: '_id',
+              as: 'mentions'
+            }
+          },
+          {
+            $addFields: {
+              mentions: {
+                $map: {
+                  input: '$mentions',
+                  as: 'mention',
+                  in: {
+                    _id: '$$mention._id',
+                    username: '$$mention.username'
+                  }
                 }
               }
             }
-          ],
-          as: 'liked'
-        }
-      },
+          },
+          {
+            $lookup: {
+              from: 'likes',
+              let: { postId: '$_id' },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [{ $eq: ['$post_id', '$$postId'] }, { $eq: ['$user_id', new ObjectId(user_id)] }]
+                    }
+                  }
+                }
+              ],
+              as: 'liked'
+            }
+          },
+          {
+            $addFields: {
+              isLiked: { $gt: [{ $size: '$liked' }, 0] }
+            }
+          },
+          {
+            $project: {
+              author: { username: 1, profilePicture: 1, _id: 1 },
+              caption: 1,
+              images: 1,
+              hashtags: 1,
+              mentions: 1,
+              likesCount: 1,
+              commentsCount: 1,
+              createdAt: 1,
+              isLiked: 1
+            }
+          },
+          { $sort: { createdAt: -1, _id: -1 } },
+          { $limit: limitPlusOne }
+        ])
+      : []
+    const randomCount = followPosts.length === 0 ? FOLLOW_LIMIT : Math.floor(followPosts.length / RATIO)
 
-      {
-        $addFields: {
-          isLiked: { $gt: [{ $size: '$liked' }, 0] }
-        }
-      },
-      {
-        $project: {
-          author: { username: 1, profilePicture: 1 },
-          caption: 1,
-          images: 1,
-          hashtags: 1,
-          mentions: 1,
-          likesCount: 1,
-          commentsCount: 1,
-          createdAt: 1,
-          isLiked: 1
-        }
-      },
-      {
-        $sort: {
-          createdAt: -1
-        }
-      },
-      { $skip: limit * (page - 1) },
-      { $limit: limit }
-    ])
+    const randomPosts =
+      randomCount > 0
+        ? await Post.aggregate([
+            {
+              $match: {
+                author: { $nin: excludeAuthorIds },
+                _id: { $nin: followPosts.map((p) => p._id) },
+                isDeleted: { $ne: true }
+              }
+            },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'author',
+                foreignField: '_id',
+                as: 'author'
+              }
+            },
+            { $unwind: '$author' },
 
-    if (posts.length === 0) return { comments: [], hasNextPage: null }
-    const total = await Post.countDocuments({
-      author: {
-        $in: ids
-      }
-    })
-    const hasNextPage = page * limit < total
+            {
+              $lookup: {
+                from: 'hashtags',
+                localField: 'hashtags',
+                foreignField: '_id',
+                as: 'hashtags'
+              }
+            },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'mentions',
+                foreignField: '_id',
+                as: 'mentions'
+              }
+            },
+            {
+              $addFields: {
+                mentions: {
+                  $map: {
+                    input: '$mentions',
+                    as: 'mention',
+                    in: {
+                      _id: '$$mention._id',
+                      username: '$$mention.username'
+                    }
+                  }
+                }
+              }
+            },
+            {
+              $lookup: {
+                from: 'likes',
+                let: { postId: '$_id' },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [{ $eq: ['$post_id', '$$postId'] }, { $eq: ['$user_id', new ObjectId(user_id)] }]
+                      }
+                    }
+                  }
+                ],
+                as: 'liked'
+              }
+            },
+            {
+              $addFields: {
+                isLiked: { $gt: [{ $size: '$liked' }, 0] }
+              }
+            },
+            {
+              $project: {
+                author: { username: 1, profilePicture: 1, _id: 1 },
+                caption: 1,
+                images: 1,
+                hashtags: 1,
+                mentions: 1,
+                likesCount: 1,
+                commentsCount: 1,
+                createdAt: 1,
+                isLiked: 1
+              }
+            },
+            { $sort: { likesCount: -1, commentsCount: -1, createdAt: -1 } },
+            { $limit: randomCount }
+          ])
+        : []
+
+    let nextCursor: string | null = null
+
+    if (followPosts.length > FOLLOW_LIMIT) {
+      const lastPost = followPosts.pop()
+
+      nextCursor = Buffer.from(
+        JSON.stringify({
+          createdAt: lastPost.createdAt,
+          _id: lastPost._id
+        })
+      ).toString('base64')
+    }
+
+    const posts = interleave(followPosts, randomPosts, RATIO)
     return {
       posts,
-      hasNextPage,
-      nextPage: hasNextPage ? page + 1 : null
+      nextCursor
     }
   }
 }

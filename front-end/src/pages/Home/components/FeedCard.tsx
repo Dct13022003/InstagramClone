@@ -1,29 +1,29 @@
-import { BookmarkIcon, HeartIcon, MessageCircleIcon, SmileIcon } from 'lucide-react'
+import { BookmarkIcon, HeartIcon, MessageCircleIcon } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar'
 import { useContext, useEffect, useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createComment, likePost, unlikePost } from '../../../apis/post.api'
 import { PostDetail } from '../../../types/post.type'
 import { formatInstagramTime } from '../../../utils/time'
-import EmojiPicker from 'emoji-picker-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { followUser } from '../../../apis/follow.api'
 import Caption from '../../../components/Caption'
 import { Comment } from '../../../types/comment.type'
 import { AppContext } from '../../../context/app.context'
 import { User } from '../../../types/user.type'
+import { SecondActionPost } from '../../../components/SecondActionPost'
+import { motion } from 'framer-motion'
 
 type FeedCardProps = {
   feed: PostDetail
+  type?: 'follow' | 'random'
 }
-export default function FeedCard({ feed }: FeedCardProps) {
+export default function FeedCard({ feed, type }: FeedCardProps) {
   const { profile } = useContext(AppContext)
   const [content, setContent] = useState('')
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const emojiRef = useRef<HTMLDivElement | null>(null)
   const buttonRef = useRef<HTMLButtonElement | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const [localComments, setLocalComments] = useState<Comment[]>([])
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const location = useLocation()
@@ -78,8 +78,10 @@ export default function FeedCard({ feed }: FeedCardProps) {
           ...old,
           pages: old.pages.map((page: any) => ({
             ...page,
-            posts: page.posts.map((p: any) =>
-              p._id === postId ? { ...p, liked: true, likesCount: p.likesCount + 1 } : p
+            posts: page.posts.map((item: any) =>
+              item.post._id === postId
+                ? { ...item, post: { ...item.post, isLiked: true, likesCount: item.post.likesCount + 1 } }
+                : item
             )
           }))
         }
@@ -91,8 +93,21 @@ export default function FeedCard({ feed }: FeedCardProps) {
       // rollback nếu lỗi
       queryClient.setQueryData(['newFeeds'], context?.prevData)
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['newFeeds'] })
+    onSuccess(data) {
+      queryClient.setQueryData(['newFeeds'], (old: any) => {
+        if (!old) return old
+        return {
+          ...old,
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            posts: page.posts.map((item: any) =>
+              item.post._id === data._id
+                ? { ...item, post: { ...item.post, isLiked: true, likesCount: data.likesCount } }
+                : item
+            )
+          }))
+        }
+      })
     }
   })
 
@@ -108,8 +123,10 @@ export default function FeedCard({ feed }: FeedCardProps) {
           ...old,
           pages: old.pages.map((page: any) => ({
             ...page,
-            posts: page.posts.map((p: any) =>
-              p._id === postId ? { ...p, liked: true, likesCount: p.likesCount - 1 } : p
+            posts: page.posts.map((item: any) =>
+              item.post._id === postId
+                ? { ...item, post: { ...item.post, isLiked: false, likesCount: item.post.likesCount - 1 } }
+                : item
             )
           }))
         }
@@ -121,8 +138,21 @@ export default function FeedCard({ feed }: FeedCardProps) {
       // rollback nếu lỗi
       queryClient.setQueryData(['newFeeds'], context?.prevData)
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['newFeeds'] })
+    onSuccess(data) {
+      queryClient.setQueryData(['newFeeds'], (old: any) => {
+        if (!old) return old
+        return {
+          ...old,
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            posts: page.posts.map((item: any) =>
+              item.post._id === data._id
+                ? { ...item, post: { ...item.post, isLiked: false, likesCount: data.likesCount } }
+                : item
+            )
+          }))
+        }
+      })
     }
   })
 
@@ -180,73 +210,122 @@ export default function FeedCard({ feed }: FeedCardProps) {
     el.style.height = newHeight + 'px'
   }
   return (
-    <article key={feed._id} className='md:p-4 border-b'>
+    <article key={feed._id} className='md:p-4 '>
       <div className='flex flex-col'>
         <div className='flex items-center gap-3 px-3 '>
           <Avatar className='my-6'>
-            <AvatarImage className='object-cover w-10 h-10 ' src={feed.author.profilePicture} />
+            <AvatarImage className='object-cover w-10 h-10 ' src={feed.author?.profilePicture} />
             <AvatarFallback />
           </Avatar>
-          <div className='flex gap-2 text-base'>
-            <NavLink to={`/${feed.author.username}`}>
-              <span className='font-semibold'>{feed.author.username} </span>
-            </NavLink>
-            <span className='text-gray-500'>•</span>
-            <span className=' text-gray-500'>
-              {feed?.createdAt ? formatInstagramTime(feed.createdAt.toString()) : ''}
-            </span>
-            <span className='text-gray-500'>•</span>
-            <button
-              onClick={() => {
-                mutateFollow(feed.author._id as string)
-              }}
-              className='text-blue-600 font-semibold hover:cursor-pointer hover:underline'
-            >
-              Theo dõi
-            </button>
+          <div className='flex items-center justify-between flex-1'>
+            <div className='flex gap-2 text-sm'>
+              <NavLink to={`/${feed.author?.username}`}>
+                <span className='font-semibold'>{feed.author?.username} </span>
+              </NavLink>
+              <span className='text-gray-500'>•</span>
+              <span className=' text-gray-500'>
+                {feed?.createdAt ? formatInstagramTime(feed.createdAt.toString()) : ''}
+              </span>
+            </div>
+            <div className='flex gap-2 items-center justify-between'>
+              {feed.author._id !== profile?._id && type === 'random' && (
+                <>
+                  <button
+                    onClick={() => {
+                      mutateFollow(feed.author._id as string)
+                    }}
+                    className='text-[#3161e9] font-semibold hover:cursor-pointer hover:underline text-sm'
+                  >
+                    Theo dõi
+                  </button>
+                </>
+              )}
+              <SecondActionPost isOwner={feed.author._id !== profile?._id} isFollowing={true} />
+            </div>
           </div>
         </div>
 
         {/* Video / Hình ảnh */}
-        <div className='bg-black rounded-sm overflow-hidden'>
+        <div className='bg-black rounded-sm overflow-hidden border-t border-b border-r border-gray-800'>
           <img src={feed.images[0]} loading='lazy' className='w-full h-auto' />
         </div>
 
         <div className='px-2'>
           <div className='flex items-center gap-5 justify-between my-4'>
-            <div className='flex gap-4 '>
-              {feed?.isLiked ? (
-                <button
-                  onClick={() => {
-                    unlikePostMutation.mutate(feed._id)
-                  }}
-                >
-                  <HeartIcon className='hover:text-gray-500 fill-red-500 text-red-500' />
+            <div className='flex gap-5 '>
+              <div className='flex gap-2 items-center'>
+                {feed?.isLiked ? (
+                  <button onClick={() => unlikePostMutation.mutate(feed._id)} className='relative'>
+                    <motion.div
+                      whileHover={{ scale: 1.05, cursor: 'pointer' }}
+                      whileTap={{ scale: 0.85 }}
+                      animate={{
+                        scale: [1, 1.35, 1]
+                      }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 500,
+                        damping: 18
+                      }}
+                    >
+                      <HeartIcon className='w-7 h-7 fill-red-500 text-red-500' />
+                    </motion.div>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      likePostMutation.mutate(feed._id)
+                    }}
+                  >
+                    <motion.div
+                      whileHover={{ scale: 1.05, cursor: 'pointer' }}
+                      whileTap={{ scale: 0.85 }}
+                      animate={{
+                        scale: [1, 1.35, 1]
+                      }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 500,
+                        damping: 18
+                      }}
+                    >
+                      <HeartIcon className='w-6 h-6 font-semibold' />
+                    </motion.div>
+                  </button>
+                )}
+                <p className='font-semibold text-base text-center'>{feed.likesCount}</p>
+              </div>
+              <div className='flex items-center gap-2'>
+                <button onClick={() => handleOpenPost(feed.author.username as string, feed._id)}>
+                  <motion.div
+                    whileHover={{ scale: 1.05, cursor: 'pointer' }}
+                    whileTap={{ scale: 0.85 }}
+                    animate={{
+                      scale: [1, 1.35, 1]
+                    }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 500,
+                      damping: 18
+                    }}
+                  >
+                    <MessageCircleIcon className=' w-6 h-6 font-semibold' />
+                  </motion.div>
                 </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    likePostMutation.mutate(feed._id)
-                  }}
-                >
-                  <HeartIcon className='hover:text-gray-500' />
-                </button>
-              )}
-              <button onClick={() => handleOpenPost(feed.author.username as string, feed._id)}>
-                <MessageCircleIcon className='cursor-pointer w-7 h-7' />
-              </button>
+                <p className='font-semibold text-base text-center'>{feed.commentsCount}</p>
+              </div>
             </div>
             <div>
               <BookmarkIcon className='cursor-pointer w-7 h-7' />
             </div>
           </div>
-          <div>
+          <div className='flex items-center gap-2'>
             <NavLink to={`/${feed.author.username}`}>
-              <span className='font-semibold'>{feed.author.username} </span>
+              <span className='font-semibold text-sm text-[#0c1014]'>{feed.author.username} </span>
             </NavLink>
             <Caption text={feed.caption} />
           </div>
-          <div className='text-gray-500'>Xem tất cả {feed.commentsCount} bình luận</div>
+          {/* <div className='text-gray-500'>Xem tất cả {feed.commentsCount} bình luận</div>
           {localComments.length > 0 &&
             localComments.map((c) => (
               <div className='my-1.5'>
@@ -289,7 +368,7 @@ export default function FeedCard({ feed }: FeedCardProps) {
                 <EmojiPicker onEmojiClick={handleEmojiClick} />
               </div>
             )}
-          </div>
+          </div> */}
         </div>
       </div>
     </article>

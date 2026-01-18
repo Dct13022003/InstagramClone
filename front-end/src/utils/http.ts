@@ -71,7 +71,7 @@ class Http {
 
         // Nếu là lỗi 401
         if (isAxiosUnAuthorizedError(error)) {
-          const config = error.response?.config || {}
+          const config = error.response?.config as typeof error.config & { URL: string }
           const { URL } = config
           if (URL !== URL_REFRESH_TOKEN && isAxiosExpiredTokenError(error)) {
             // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -94,6 +94,7 @@ class Http {
           this.access_token = ''
           this.refresh_token = ''
         }
+        return Promise.reject(error)
       }
     )
   }

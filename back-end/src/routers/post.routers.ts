@@ -27,7 +27,7 @@ postsRouter.get('/:post_id', accessTokenValidator, postValidator, wrapAsync(getP
  * Method: GET
  * Headers: {Authorization: Bearer <access_token>}
  */
-postsRouter.get('/', accessTokenValidator, checkPageAndLimit, wrapAsync(getNewFeedsController))
+postsRouter.get('/', accessTokenValidator, wrapAsync(getNewFeedsController))
 /**
  * Description: Post comment
  * Route: /:post_id/comments/

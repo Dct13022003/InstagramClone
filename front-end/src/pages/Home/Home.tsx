@@ -1,20 +1,24 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { fetchNewFeed } from '../../apis/post.api'
-import InfiniteScroll from 'react-infinite-scroll-component'
 import FeedCard from './components/FeedCard'
 import { NavLink } from 'react-router-dom'
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
+import { Avatar, AvatarImage } from '../../components/ui/avatar'
 import { suggestFollow } from '../../apis/follow.api'
 import { UserStories } from './components/UserStories'
+import { Virtuoso } from 'react-virtuoso'
+import { useMemo } from 'react'
+import { FeedItem } from '../../types/post.type'
 
 export default function Home() {
-  const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['newFeeds'],
-    queryFn: ({ pageParam = 1 }) => fetchNewFeed(pageParam),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => (lastPage.hasNextPage ? lastPage.nextPage : undefined)
+    initialPageParam: null,
+    queryFn: ({ pageParam }: { pageParam: string | null }) => fetchNewFeed(pageParam),
+    getNextPageParam: (lastPage) => lastPage.nextCursors ?? undefined,
+    staleTime: 30000
   })
-  const newFeeds = data?.pages.flatMap((page) => page.posts) ?? []
+
+  const newFeeds = useMemo(() => data?.pages.flatMap((page) => page.posts) ?? [], [data])
 
   const { data: suggestFollows } = useQuery({
     queryKey: ['suggestFollows'],
@@ -23,24 +27,26 @@ export default function Home() {
 
   return (
     <div className='w-full flex '>
-      <main className='max-w-2xl w-full mx-auto border-l flex flex-col items-center'>
+      <main className='max-w-2xl w-full flex flex-col items-center'>
         <UserStories />
-        <div className='flex-1 max-w-xl '>
-          <InfiniteScroll
-            dataLength={newFeeds.length}
-            next={fetchNextPage}
-            hasMore={hasNextPage}
-            loader={<div className='text-center py-2 text-gray-500'>Đang tải...</div>}
-            style={{ display: 'flex', flexDirection: 'column' }}
-          >
-            {newFeeds.map((feed) => (
-              <FeedCard feed={feed} key={feed._id} />
-            ))}
-          </InfiniteScroll>
+        <div className='flex-1 max-w-lg w-full mx-auto '>
+          <Virtuoso
+            useWindowScroll
+            data={newFeeds}
+            endReached={() => {
+              if (hasNextPage && !isFetchingNextPage) {
+                fetchNextPage()
+              }
+            }}
+            className='max-w-full'
+            itemContent={(_: number, feed: FeedItem) => (
+              <FeedCard feed={feed.post} type={feed.type} key={feed.post._id} />
+            )}
+          />
         </div>
       </main>
       <div className='flex-1 px-4 mt-9 lg:block hidden max-w-sm'>
-        <div className='flex justify-between'>
+        <div className='flex justify-around mb-3'>
           <div className='font-semibold'>
             <span>Gợi ý cho bạn</span>
           </div>
@@ -54,17 +60,17 @@ export default function Home() {
           <ul>
             {suggestFollows?.map((user) => (
               <li className='mb-3' key={user._id}>
-                <div className='flex items-center justify-between'>
-                  <div>
-                    <Avatar>
-                      <AvatarImage className='object-cover w-15 h-15 ' src={user?.profilePicture} />
-                      <AvatarFallback />
+                <div className='flex items-center justify-around'>
+                  <div className='flex flex-1/4 items-center justify-center'>
+                    <Avatar className='w-10 h-10'>
+                      <AvatarImage className='object-cover' src={user?.profilePicture} />
                     </Avatar>
                   </div>
-                  <div className='flex-row'>
-                    <div>
+                  <div className='flex-2/4 '>
+                    <NavLink to={`${user.username}`} className='flex flex-col'>
                       <span className='font-semibold'>{user.username}</span>
-                    </div>
+                    </NavLink>
+
                     <div className='text-sm text-gray-500'>
                       {user.mutualFollowers?.length > 0 ? (
                         <div>
@@ -79,7 +85,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div>
+                  <div className='flex-1/4'>
                     <button className='text-blue-500 text-[12px] font-semibold'>Theo dõi</button>
                   </div>
                 </div>

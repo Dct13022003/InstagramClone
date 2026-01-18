@@ -4,7 +4,7 @@ import { Button } from '../../../components/ui/button'
 import { useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { uploadImages } from '../../../apis/media.api'
-import { useCreateStory } from '../hook/useStories'
+import { useStoryCreate } from '../hook/useStories'
 
 type ModalCreateStoryProps = {
   isOpen: boolean
@@ -15,7 +15,7 @@ export function ModalCreateStory({ isOpen, handleClose }: ModalCreateStoryProps)
   const useUploadMedia = useMutation({
     mutationFn: uploadImages
   })
-  const { mutate: mutateStory, isPending: createStoryPending } = useCreateStory()
+  const { mutate: mutateStory, isPending: createStoryPending } = useStoryCreate()
   const [image, setImage] = useState<File>(null)
   const [preview, setPreview] = useState<string>(null)
   const [step] = useState<1 | 2>(1)

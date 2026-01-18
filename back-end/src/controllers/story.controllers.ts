@@ -26,9 +26,18 @@ export const getStoryUser = async (req: Request, res: Response, next: NextFuncti
   }
 }
 
-export const getStoryFeed = async (req: Request, res: Response) => {
+export const getStoryBar = async (req: Request, res: Response) => {
   const { user_id } = req.decode_authorization as TokenPayload
-  const result = await storyService.getStoryFeed(user_id)
+  const result = await storyService.getStoryBar(user_id)
+  return res.json({
+    message: STORY_MESSAGES.GET_STORY_FEED_SUCCESS,
+    result
+  })
+}
+
+export const getStoryFeed = async (req: Request, res: Response) => {
+  const { userIds } = req.query as { userIds: string[] }
+  const result = await storyService.getStoryFeed(userIds)
   return res.json({
     message: STORY_MESSAGES.GET_STORY_FEED_SUCCESS,
     result

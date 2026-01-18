@@ -2,10 +2,11 @@ import { io, Socket } from 'socket.io-client'
 
 let socket: Socket | null = null
 
-export const connectSocket = (user_id: string): Socket => {
+export const connectSocket = (): Socket => {
+  const token = localStorage.getItem('access_token')
   if (!socket) {
     socket = io('http://localhost:8000', {
-      query: { user_id },
+      auth: { token: token },
       autoConnect: false
     })
     socket.connect()

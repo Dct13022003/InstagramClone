@@ -48,7 +48,7 @@ export default function SearchOpen(isChatPage: SearchOpenProps) {
   return (
     <div
       ref={panelRef}
-      className={`
+      className={`hidden md:block
           fixed top-0 h-full z-20
            bg-white w-[450px]
           transform transition-transform duration-500 ease-out rounded-br-lg rounded-tr-lg

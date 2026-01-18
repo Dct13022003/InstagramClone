@@ -1,19 +1,19 @@
 import mongoose, { Document, ObjectId, Schema, Types } from 'mongoose'
 export interface IStory extends Document {
-  mediaUrl: string[]
+  mediaUrl: string
   author: ObjectId
-  mediaType: string[]
+  mediaType: string
   viewedBy?: ObjectId[]
   duration?: number
   expiresAt?: Date
 }
 const storySchema = new Schema<IStory>(
   {
-    mediaUrl: [{ type: String, required: true }],
+    mediaUrl: { type: String, required: true },
     author: { type: Types.ObjectId, required: true, ref: 'User' },
-    mediaType: [{ type: String, required: true }],
+    mediaType: { type: String, required: true },
     viewedBy: [{ type: Types.ObjectId, ref: 'User', default: [] }],
-    duration: { type: Number, default: 5 },
+    duration: { type: Number, default: 5000 },
     expiresAt: { type: Date, default: () => new Date(Date.now() + 24 * 60 * 60 * 1000) }
   },
   { timestamps: true, collection: 'stories' }

@@ -18,6 +18,16 @@ export interface PostDetail extends Post {
 }
 export interface ListPostDetail {
   posts: PostDetail[]
-  hasNextPage: boolean
-  nextPage?: number | null
+  nextCursor: string | null
+}
+
+export type FeedItemType = 'follow' | 'random'
+
+export type FeedItem = {
+  type: FeedItemType
+  post: PostDetail
+}
+export type FeedResponse = {
+  posts: FeedItem[]
+  nextCursors: string | null
 }

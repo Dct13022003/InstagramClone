@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 interface CaptionProps {
   text: string
-  limit?: number 
+  limit?: number
 }
 
 export default function Caption({ text, limit = 120 }: CaptionProps) {

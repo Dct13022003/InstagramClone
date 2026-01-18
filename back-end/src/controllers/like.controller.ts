@@ -8,19 +8,19 @@ import { likeService } from '~/services/like.services'
 export const likeController = async (req: Request<ParamsDictionary, any, likePostRequestBody>, res: Response) => {
   const { user_id } = req.decode_authorization as TokenPayload
   const post_id = req.params.post_id
-  await likeService.createLike(user_id, post_id)
-  res.status(201).json({
+  const result = await likeService.createLike(user_id, post_id)
+  res.status(200).json({
     message: LIKE_MESSAGES.LIKE_SUCCESS,
-    success: true
+    result
   })
 }
 
 export const unlikeController = async (req: Request, res: Response) => {
   const { user_id } = req.decode_authorization as TokenPayload
   const post_id = req.params.post_id
-  await likeService.unLike(user_id, post_id)
+  const result = await likeService.unLike(user_id, post_id)
   res.status(201).json({
     message: LIKE_MESSAGES.UNLIKE_SUCCESS,
-    success: true
+    result
   })
 }

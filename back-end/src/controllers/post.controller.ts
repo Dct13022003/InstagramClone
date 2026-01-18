@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { Pagination, PostRequestBody } from '~/models/request/post.request'
+import {  PostRequestBody } from '~/models/request/post.request'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { TokenPayload } from '~/models/request/user.request'
 import { postService } from '~/services/post.services'
@@ -19,11 +19,12 @@ export const getPostDetailController = async (req: Request, res: Response) => {
     result
   })
 }
-export const getNewFeedsController = async (req: Request<ParamsDictionary, any, any, Pagination>, res: Response) => {
+export const getNewFeedsController = async (req: Request, res: Response) => {
   const { user_id } = req.decode_authorization as TokenPayload
-  const limit = Number(req.query.limit)
-  const page = Number(req.query.page)
-  const result = await postService.getNewFeeds({ user_id, limit, page })
+  const limit = Number(req.query.limit) || 10
+  const cursor = req.query.cursor as string | undefined
+  const decodedCursor = cursor ? JSON.parse(Buffer.from(cursor, 'base64').toString()) : null
+  const result = await postService.getNewFeeds({ user_id, limit, decodedCursor })
   return res.json({
     result
   })

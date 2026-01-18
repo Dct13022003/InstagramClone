@@ -5,7 +5,7 @@ import { registerUser } from '../../apis/auth.api'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { schema } from '../../utils/rules'
 import InputForm from '../../components/InputForm'
-import { useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { isAxiosUnprocessableEntityError } from '../../utils/utils'
 import { ErrorResponse } from '../../types/utils.type'
 import { Button } from '../../components/ui/button'
@@ -63,14 +63,16 @@ export default function Register() {
     })
   })
   return (
-    <div className='flex justify-center min-h-screen bg-gray-50 p-4'>
-      <div className='w-full max-w-lg'>
-        <div className='bg-gray-50 border border-gray-300 px-12 py-6'>
-          <h1 className='text-4xl font-logo text-center my-4'>Instagram</h1>
-          <p className='text-center text-gray-500 text-2xl mb-4'>Đăng ký để xem ảnh và video từ bạn bè.</p>
-          <button className='w-full bg-blue-500 text-white py-2 rounded font-medium mb-4'>
-            Đăng nhập bằng Facebook
-          </button>
+    <div className='flex justify-center items-center min-h-screen bg-gray-50 p-4'>
+      <div className='w-full lg:max-w-sm md:max-w-md'>
+        <div className='bg-gray-50 md:border border-gray-300 px-8 py-6'>
+          <h1 className='text-4xl font-stretch-normal text-center my-4'>Instagram</h1>
+          <p className='text-center text-gray-400 text-base font-semibold mb-4'>
+            Đăng ký để xem ảnh và video từ bạn bè.
+          </p>
+          <Button className='w-full my-4 bg-[#0064e0] hover:bg-blue-500 text-white text-xl px-4 py-6 rounded-xl'>
+            Đăng nhập
+          </Button>
           <div className='flex items-center justify-center mb-4'>
             <span className='w-full border-t border-gray-300'></span>
             <span className='px-2 text-sm text-gray-400'>HOẶC</span>
@@ -81,7 +83,7 @@ export default function Register() {
               name='email'
               type='text'
               classNameError=''
-              classNameInput=''
+              classNameInput='rounded-xl'
               register={register}
               placeholder='Nhập mật email'
               errorMessage={errors.email?.message}
@@ -91,7 +93,7 @@ export default function Register() {
               name='password'
               type='password'
               classNameError=''
-              classNameInput=''
+              classNameInput='rounded-xl'
               trackPassword={trackPassword}
               register={register}
               placeholder='Nhập mật khẩu của bạn'
@@ -102,7 +104,7 @@ export default function Register() {
               name='confirm_password'
               type='password'
               classNameError=''
-              classNameInput=''
+              classNameInput='rounded-xl'
               trackPassword={trackConfirm_password}
               register={register}
               placeholder='Nhập lại mật khẩu của bạn'
@@ -113,15 +115,17 @@ export default function Register() {
               type='text'
               placeholder='Tên đầy đủ'
               {...register('fullname')}
-              className='w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500'
+              className='w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500'
             />
             <Input
               type='text'
               placeholder='Tên người dùng'
               {...register('username')}
-              className='w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500'
+              className='w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500'
             />
-            <Button className='w-full mt-4 bg-blue-500 text-white text-xl px-4 py-6'>Đăng ký</Button>
+            <Button className='w-full mt-4 bg-[#0064e0] hover:bg-blue-500 text-white text-xl px-4 py-6 rounded-xl'>
+              Đăng nhập
+            </Button>
           </form>
           <p className='text-xs text-center text-gray-500 mt-4'>
             Bằng cách đăng ký, bạn đồng ý với Điều khoản, Chính sách quyền riêng tư và Chính sách cookie của chúng tôi.
@@ -130,9 +134,9 @@ export default function Register() {
         <div className='bg-gray-50 border border-gray-300 px-12 py-6 flex items-center justify-center my-4'>
           <div className='text-center'>
             <p>Bạn có tài khoản?</p>
-            <a href='#' className='text-blue-500 font-semibold'>
+            <NavLink to='/login' className='ml-2 text-blue-500 text-xl'>
               Đăng nhập
-            </a>
+            </NavLink>
           </div>
         </div>
       </div>

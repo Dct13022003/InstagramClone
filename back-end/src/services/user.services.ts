@@ -213,29 +213,37 @@ class UserService {
     )
     return avatar_user
   }
-  async getAllPostByUser(user_name: string, page: number, limit: number) {
+  async getAllPostByUser(user_name: string, cursor?: string, limit?: number) {
     const user = await User.findOne({ username: user_name }).select('_id')
     if (!user) throw new Error('User not found')
 
-    const posts = await Post.find({ author: user._id })
-      .select('-__v -author -updatedAt -hashtags -mentions -likes') // bỏ likes nếu muốn
-      .skip((page - 1) * limit)
-      .limit(limit)
+    const limitNum = Number(limit) || 9
+
+    // cursor = createdAt của post cuối cùng trang trước
+    const cursorDate = cursor ? new Date(cursor) : null
+
+    const query = {
+      author: user._id,
+      ...(cursorDate && { createdAt: { $lt: cursorDate } })
+    }
+
+    const posts = await Post.find(query)
+      .select('-__v -author -updatedAt -hashtags -mentions -likes')
       .sort({ createdAt: -1 })
+      .limit(limitNum + 1) // +1 để check còn trang tiếp không
       .lean()
 
-    const totalPosts = await Post.countDocuments({ author: user._id })
-    const hasNextPage = page * limit < totalPosts
-
-    if (posts.length === 0) return { posts: [], hasNextPage: null }
+    let nextCursor = null
+    if (posts.length > limitNum) {
+      nextCursor = posts[limitNum].createdAt // Lấy createdAt của phần tử dư làm cursor cho trang tiếp theo
+      posts.pop() // bỏ phần tử dư
+    }
 
     return {
-      posts: posts,
-      hasNextPage,
-      nextPage: hasNextPage ? page + 1 : null
+      posts,
+      nextCursor
     }
   }
-  
 }
 const userService = new UserService()
 export default userService
