@@ -5,6 +5,7 @@ import { commentService } from '~/services/comment.services'
 import { COMMENT_MESSAGES, POST_MESSAGES } from '~/constants/message'
 import { CommentRequestBody } from '~/models/request/comment.request'
 import { Pagination, PostParam } from '~/models/request/post.request'
+import { sendRealtimeNotification } from '~/socket/notification'
 
 export const createCommentController = async (
   req: Request<ParamsDictionary, any, CommentRequestBody>,
@@ -12,8 +13,9 @@ export const createCommentController = async (
 ) => {
   const { user_id } = req.decode_authorization as TokenPayload
   const post_id = req.params.post_id
-  const result = await commentService.createComment(user_id, post_id, req.body)
-  return res.json({ message: POST_MESSAGES.POST_SUCCESS, result })
+  const { comment, post_author } = await commentService.createComment(user_id, post_id, req.body)
+  sendRealtimeNotification(post_author)
+  return res.json({ message: POST_MESSAGES.POST_SUCCESS, result: comment })
 }
 export const getCommentController = async (req: Request<PostParam, any, any, Pagination>, res: Response) => {
   const post_id = req.params.post_id
@@ -31,6 +33,13 @@ export const getCommentRepliesController = async (req: Request<PostParam, any, a
   const page = Number(req.query.page)
   const result = await commentService.getCommentReplies(comment_id, limit, page, user_id)
   return res.json({ result })
+}
+
+export const deleteCommentController = async (req: Request<PostParam, any, any, Pagination>, res: Response) => {
+  const comment_id = req.params.comment_id
+  const { user_id } = req.decode_authorization as TokenPayload
+  await commentService.deleteComment(comment_id, user_id)
+  return res.json({ message: COMMENT_MESSAGES.DELETE_SUCCESS })
 }
 
 export const likeCommentController = async (req: Request<ParamsDictionary, any, any>, res: Response) => {

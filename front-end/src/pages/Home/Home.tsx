@@ -31,6 +31,7 @@ export default function Home() {
         <UserStories />
         <div className='flex-1 max-w-lg w-full mx-auto '>
           <Virtuoso
+            style={{ height: '100vh' }}
             useWindowScroll
             data={newFeeds}
             endReached={() => {
@@ -39,8 +40,8 @@ export default function Home() {
               }
             }}
             className='max-w-full'
-            itemContent={(_: number, feed: FeedItem) => (
-              <FeedCard feed={feed.post} type={feed.type} key={feed.post._id} />
+            itemContent={(index: number, feed: FeedItem) => (
+              <FeedCard feed={feed.post} type={feed.type} key={feed.post._id} index={index} />
             )}
           />
         </div>

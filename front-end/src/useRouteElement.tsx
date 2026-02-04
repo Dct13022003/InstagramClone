@@ -13,7 +13,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import DetailPost from './pages/DetailPost'
 import StoryViewer from './pages/Home/components/StoryViewer'
-import ModalPostDetail from './components/ModalPostDetail'
+import ModalPostDetail from './pages/Home/components/ModalPostDetail'
 
 function ProtectedRoute() {
   const { isAuthenticated } = useContext(AppContext)
@@ -85,8 +85,16 @@ export default function useRouteElement(backgroundLocation?: Location<any>) {
       }
     ]
   }
-  return useRoutes(
-    [protectedRoutes, rejectedRoutes, ...(backgroundLocation ? [modalRoutes] : [])],
-    backgroundLocation || (location as Location)
+  const baseRoutes = [protectedRoutes, rejectedRoutes]
+
+  const baseElement = useRoutes(baseRoutes, backgroundLocation || (location as Location))
+
+  const modalElement = useRoutes([modalRoutes], location as Location)
+
+  return (
+    <>
+      {baseElement}
+      {backgroundLocation ? modalElement : null}
+    </>
   )
 }

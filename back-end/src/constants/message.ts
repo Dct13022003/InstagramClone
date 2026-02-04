@@ -75,6 +75,7 @@ export const MEDIA_MESSAGES = {
 
 export const COMMENT_MESSAGES = {
   COMMENT_SUCCESS: 'Comment success',
+  DELETE_SUCCESS: 'Delete comment success',
   GET_COMMENT_SUCCESS: 'Get comment success',
   LIKE_COMMENT_SUCCESS: 'Like comment success',
   UNLIKE_COMMENT_SUCCESS: 'Unlike comment success'

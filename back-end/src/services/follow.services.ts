@@ -1,6 +1,8 @@
 import { ObjectId } from 'mongodb'
+import mongoose from 'mongoose'
 import { USER_MESSAGES } from '~/constants/message'
 import { Follow } from '~/models/follow.models'
+import { Notification } from '~/models/notification.models'
 import { User } from '~/models/user.models'
 
 class FollowService {
@@ -11,23 +13,51 @@ class FollowService {
   }
   async follow(user_id: string, user_id_follow: string) {
     const user = await Follow.findOne({ follower: new ObjectId(user_id), following: new ObjectId(user_id_follow) })
-    if (user === null) {
-      await Follow.create({
+    if (user) return null
+
+    const session = await mongoose.startSession() // Nếu dùng MongoDB
+    session.startTransaction()
+
+    try {
+      // 1. Tạo quan hệ Follow
+      const follow = new Follow({
         follower: new ObjectId(user_id),
         following: new ObjectId(user_id_follow)
       })
-      return { message: USER_MESSAGES.FOLLOW_SUCCESS }
+
+      // 2. Tạo thông báo
+      const newNoti = new Notification({
+        senderId: user_id,
+        receiverId: user_id_follow,
+        type: 'FOLLOW',
+        content: 'đã bắt đầu theo dõi bạn'
+      })
+      await follow.save({ session })
+      await newNoti.save({ session })
+      await session.commitTransaction()
+      return newNoti
+    } catch (error) {
+      await session.abortTransaction()
+      console.log(error)
+    } finally {
+      session.endSession()
     }
-    return { message: USER_MESSAGES.FOLLOWED }
   }
 
   async unFollow(user_id: string, user_id_unfollow: string) {
     const user = await Follow.findOne({ follower: new ObjectId(user_id), following: new ObjectId(user_id_unfollow) })
     if (user !== null) {
-      await Follow.deleteOne({
-        follower: new ObjectId(user_id),
-        following: new ObjectId(user_id_unfollow)
-      })
+      await Promise.all([
+        Follow.deleteOne({
+          follower: new ObjectId(user_id),
+          following: new ObjectId(user_id_unfollow)
+        }),
+        Notification.deleteOne({
+          senderId: new ObjectId(user_id),
+          receiverId: new ObjectId(user_id_unfollow)
+        })
+      ])
+
       return { message: USER_MESSAGES.UNFOLLOW_SUCCESS }
     }
     return { message: USER_MESSAGES.UNFOLLOW_FAIL }

@@ -1,16 +1,19 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import AppSidebar from '../../components/App-sidebar'
 import { SidebarProvider, useSidebar } from '../../components/ui/sidebar'
-import { useEffect, useState } from 'react'
-import { SearchContext } from './SearchContext'
+import { useContext, useEffect, useState } from 'react'
+import { PanelContext } from './PanelContext'
 import SearchOpen from './component/SearchOpen'
+import NotifyOpen from './component/NotifyOpen'
+import { useNotificationStore } from '../../store/useNotificationStore'
+import { AppContext } from '../../context/app.context'
 
-function SidebarAutoCollapse({ searchOpen }: { searchOpen: boolean }) {
+function SidebarAutoCollapse({ searchOpen, notificationOpen }: { searchOpen: boolean; notificationOpen: boolean }) {
   const { pathname } = useLocation()
   const { setOpen } = useSidebar()
 
   useEffect(() => {
-    if (searchOpen) {
+    if (searchOpen || notificationOpen) {
       setOpen(false)
       return
     }
@@ -20,22 +23,39 @@ function SidebarAutoCollapse({ searchOpen }: { searchOpen: boolean }) {
     } else {
       setOpen(true)
     }
-  }, [pathname, searchOpen])
+  }, [pathname, searchOpen, notificationOpen])
 
   return null
 }
 
 export default function MainLayout() {
+  const setUnread = useNotificationStore((s) => s.newUnread)
+  const { socket } = useContext(AppContext)
+  useEffect(() => {
+    if (!socket) return
+
+    const handler = () => {
+      setUnread()
+    }
+
+    socket.on('new-notification', handler)
+
+    return () => {
+      socket.off('new-notification', handler)
+    }
+  }, [socket, setUnread])
   const { pathname } = useLocation()
   const isChatPage = pathname.startsWith('/chat')
   const [searchOpen, setSearchOpen] = useState(false)
+  const [notificationOpen, setNotificationOpen] = useState(false)
   return (
-    <SearchContext.Provider value={{ searchOpen, setSearchOpen }}>
+    <PanelContext.Provider value={{ searchOpen, setSearchOpen, notificationOpen, setNotificationOpen }}>
       <SidebarProvider sidebar={<AppSidebar />} isChatPage={isChatPage}>
-        <SidebarAutoCollapse searchOpen={searchOpen} />
+        <SidebarAutoCollapse searchOpen={searchOpen} notificationOpen={notificationOpen} />
         <Outlet />
         <SearchOpen />
+        <NotifyOpen />
       </SidebarProvider>
-    </SearchContext.Provider>
+    </PanelContext.Provider>
   )
 }

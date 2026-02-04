@@ -1,5 +1,5 @@
 import { NavLink, useParams } from 'react-router-dom'
-import { createComment, getPostDetail, likePost, unlikePost } from '../../apis/post.api'
+import { createComment, deleteComment, getPostDetail, likePost, unlikePost } from '../../apis/post.api'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { useContext, useEffect, useRef, useState } from 'react'
@@ -13,10 +13,13 @@ import { TooltipContent, TooltipTrigger } from '@radix-ui/react-tooltip'
 import { AppContext } from '../../context/app.context'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '../../components/ui/carousel'
 import { userPosts } from '../../apis/profile.api'
+import CommentActionsModal from './components/CommentActionsModal'
 
 export default function DetailPost({ layout = 'full' }: { layout?: 'full' | 'modal' }) {
   const isModal = layout === 'modal'
   const { profile } = useContext(AppContext)
+  const [selectedComment, setSelectedComment] = useState<Comment | null>(null)
+  const [isActionsOpen, setIsActionsOpen] = useState(false)
   const [content, setContent] = useState('')
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [reply, setReplyTo] = useState<string | null>(null)
@@ -59,6 +62,7 @@ export default function DetailPost({ layout = 'full' }: { layout?: 'full' | 'mod
         _id: tempId,
         text: content,
         mentions: null,
+        repliesCount: 0,
         likes: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -67,7 +71,7 @@ export default function DetailPost({ layout = 'full' }: { layout?: 'full' | 'mod
           profilePicture: profile?.profilePicture || '/default-avatar.png'
         },
         post_id: postId as string,
-        parent_id: reply || null
+        parent_id: { _id: reply || null }
       }
 
       queryClient.setQueryData(queryKey, (oldData: CommentResponse) => {
@@ -92,13 +96,16 @@ export default function DetailPost({ layout = 'full' }: { layout?: 'full' | 'mod
       if (ctx?.prevData) {
         queryClient.setQueryData(ctx.queryKey, ctx.prevData)
       }
-    },
-
-    onSettled: (data, error, variables, ctx) => {
-      if (ctx?.queryKey) {
-        queryClient.invalidateQueries({ queryKey: ctx.queryKey })
-      }
     }
+
+    // onSettled: (data, error, variables, ctx) => {
+    //   if (ctx?.queryKey) {
+    //     queryClient.invalidateQueries({ queryKey: ctx.queryKey })
+    //   }
+    // }
+  })
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => deleteComment(commentId)
   })
 
   const likePostMutation = useMutation({
@@ -200,11 +207,25 @@ export default function DetailPost({ layout = 'full' }: { layout?: 'full' | 'mod
     const newHeight = Math.min(el.scrollHeight, 4 * 24)
     el.style.height = newHeight + 'px'
   }
+  const closeModal = () => setIsActionsOpen(false)
+  const handleActionsOpenChange = (open: boolean) => {
+    setIsActionsOpen(open)
+    if (!open) {
+      setSelectedComment(null)
+    }
+  }
+
+  const handleDelete = () => {
+    if (!selectedComment?._id) return
+    const commentId = selectedComment._id
+    deleteCommentMutation.mutate(commentId)
+    closeModal()
+  }
 
   return (
     <div className={`${isModal ? 'w-full' : 'mx-[30.5px] pt-[32px] px-[20px]'} `}>
       <div className={`${isModal ? 'h-[90vh]' : 'h-screen'}`}>
-        <div className={`flex h-full max-w-4xl mx-auto bg-white border border-gray-300 rounded-lg overflow-hidden`}>
+        <div className={`flex h-full max-w-4xl mx-auto bg-white border border-gray-300  overflow-hidden`}>
           {/* Left: Image */}
           <div className='flex-1 h-full relative flex items-center justify-center'>
             <Carousel className='h-full flex items-center'>
@@ -242,7 +263,15 @@ export default function DetailPost({ layout = 'full' }: { layout?: 'full' | 'mod
               )}
             </div>
 
-            <ListComment postId={postId as string} onReply={handleReply} postDetail={postDetail ?? null} />
+            <ListComment
+              postId={postId as string}
+              onReply={handleReply}
+              postDetail={postDetail ?? null}
+              onOpenActions={(comment) => {
+                setSelectedComment(comment)
+                setIsActionsOpen(true)
+              }}
+            />
 
             <div className='px-4 pt-3 border-t border-gray-200 text-sm '>
               <div className='flex items-center justify-between mb-1'>
@@ -287,7 +316,7 @@ export default function DetailPost({ layout = 'full' }: { layout?: 'full' | 'mod
             {/* Input */}
             <div className='flex px-4 pt-3 items-center w-full '>
               <Avatar className='my-6 w-10 h-10 '>
-                <AvatarImage className='object-cover ' src={postDetail?.author.profilePicture} />
+                <AvatarImage className='object-cover ' src={profile?.profilePicture} />
                 <AvatarFallback />
               </Avatar>
               <div className=' py-3 border-gray-200 relative flex-1 '>
@@ -364,6 +393,14 @@ export default function DetailPost({ layout = 'full' }: { layout?: 'full' | 'mod
           </div>
         </>
       )}
+      <CommentActionsModal
+        open={isActionsOpen}
+        selectedComment={selectedComment}
+        authorPost={postDetail?.author._id as string}
+        onClose={closeModal}
+        onDelete={handleDelete}
+        onOpenChange={handleActionsOpenChange}
+      />
     </div>
   )
 }

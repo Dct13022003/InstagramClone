@@ -37,6 +37,12 @@ export const createComment = async ({
   })
   return response.data.result
 }
+
+export const deleteComment = async (commentId: string) => {
+  const { data } = await http.delete<SuccessResponse<void>>(`comments/${commentId}`)
+  return data
+}
+
 export const fetchComments = async (postId: string, pageParam: number): Promise<CommentResponse> => {
   const response = await http.get<SuccessResponse<CommentResponse>>(`comments/${postId}`, {
     params: {

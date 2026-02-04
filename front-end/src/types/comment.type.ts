@@ -10,7 +10,9 @@ export interface Comment {
   mentions?: User[] | null
   likes?: number
   replies?: number
+  isDelete: boolean
   createdAt: string
+  repliesCount: number
   updatedAt?: string
 }
 export interface CommentForm {

@@ -10,11 +10,13 @@ import { formatInstagramTime } from '../../../utils/time'
 export default function ListComment({
   postId,
   onReply,
-  postDetail
+  postDetail,
+  onOpenActions
 }: {
   postId: string
   onReply?: ({ username, comment_id }: { username: string; comment_id: string }) => void
   postDetail: PostDetail | null
+  onOpenActions: (comment: any) => void
 }) {
   const queryClient = useQueryClient()
   const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
@@ -148,6 +150,7 @@ export default function ListComment({
                 onReply={onReply}
                 onLike={handleLikeComment}
                 onUnlike={handleUnlikeComment}
+                onOpenActions={onOpenActions}
               />
             ))}
           </InfiniteScroll>

@@ -22,7 +22,6 @@ export function groupMessagesByTime(messages: Message[], thresholdMinutes = 1) {
 }
 
 export function formatInstagramTime(dateString: string) {
-  // Lấy khoảng cách dạng "1 day", "2 weeks", "3 hours"...
 
   const created = new Date(dateString)
   const now = new Date()

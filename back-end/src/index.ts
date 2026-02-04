@@ -11,12 +11,12 @@ import likeRouter from './routers/like.routers'
 import { initFolder } from './utils/file'
 import mediasRouter from './routers/media.routers'
 import { createServer } from 'http'
-import { Server } from 'socket.io'
 import conversationRouter from './routers/conversation.routers'
 import commentsRouter from './routers/comment.routers'
 import searchRouter from './routers/search.routers'
 import storyRouter from './routers/story.routers'
 import { initSocket } from './socket'
+import { notificationRouter } from './routers/notification.routers'
 
 // import '~/utils/fake'
 
@@ -42,16 +42,11 @@ app.use('/conversations', conversationRouter)
 app.use('/comments', commentsRouter)
 app.use('/search', searchRouter)
 app.use('/stories', storyRouter)
+app.use('/notifications', notificationRouter)
 app.use(defaultErrorHandler)
 
 const httpServer = createServer(app)
-const io = new Server(httpServer, {
-  cors: {
-    origin: 'http://localhost:3000' // client url
-  }
-})
-initSocket(io)
-
+const io = initSocket(httpServer)
 httpServer.listen(PORT, () => {
   connectDB()
   console.log('sever is running on port', PORT)

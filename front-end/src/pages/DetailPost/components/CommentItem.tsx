@@ -1,4 +1,4 @@
-import { HeartIcon } from 'lucide-react'
+import { Ellipsis, HeartIcon } from 'lucide-react'
 import { formatInstagramTime } from '../../../utils/time'
 import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar'
 import { Comment } from '../../../types/comment.type'
@@ -13,9 +13,17 @@ type CommentItemProps = {
   onUnlike?: ({ commentId, parentId }: { commentId: string; parentId?: string }) => void
   showRepliesButton?: boolean
   isChild?: boolean
+  onOpenActions: (comment: any) => void
 }
 
-export default function CommentItem({ comment: c, onReply, onLike, onUnlike, isChild = false }: CommentItemProps) {
+export default function CommentItem({
+  comment: c,
+  onReply,
+  onLike,
+  onUnlike,
+  isChild = false,
+  onOpenActions
+}: CommentItemProps) {
   const [showReplies, setShowReplies] = useState(false)
   return (
     <div className={`flex flex-col ${isChild ? 'ml-12' : ''}`}>
@@ -29,7 +37,7 @@ export default function CommentItem({ comment: c, onReply, onLike, onUnlike, isC
         </div>
 
         {/* Nội dung comment */}
-        <div className='flex flex-1 flex-col'>
+        <div className='group flex flex-1 flex-col'>
           <p>
             <NavLink to={`/${c.author.username}`} className='font-semibold mr-2 text-base'>
               {c.author.username}
@@ -39,15 +47,19 @@ export default function CommentItem({ comment: c, onReply, onLike, onUnlike, isC
             </span>
           </p>
           <p className='text-base whitespace-pre-wrap break-all'>{c.text}</p>
-          <p className='mt-1 flex gap-4'>
-            {c.likes > 0 && <span className='text-sm text-gray-500'>{c.likes} lượt thích</span>}
+          <p className='mt-1 flex gap-5 items-center'>
+            {(c.likes ?? 0) > 0 && <span className='text-sm text-gray-500'>{c.likes} lượt thích</span>}
             <button
               type='button'
               className='text-sm text-gray-500 hover:cursor-pointer'
               onClick={() => onReply?.({ username: c.author.username as string, comment_id: c._id })}
             >
-              trả lời
+              Trả lời
             </button>
+            <Ellipsis
+              onClick={() => onOpenActions(c)}
+              className='opacity-0 group-hover:opacity-100 hover:cursor-pointer transition-opacity text-gray-500'
+            />
           </p>
         </div>
 
@@ -64,7 +76,7 @@ export default function CommentItem({ comment: c, onReply, onLike, onUnlike, isC
           )}
         </div>
       </div>
-      {(c?.replies ?? 0) > 0 ? (
+      {(c?.repliesCount ?? 0) > 0 ? (
         <div className='flex items-center ml-13'>
           <div className='relative w-10'>
             <span className='bg-gray-300 h-px w-7 mr-2 absolute top-1/2' />
@@ -75,7 +87,7 @@ export default function CommentItem({ comment: c, onReply, onLike, onUnlike, isC
             </button>
           ) : (
             <button className='text-xs text-gray-500 hover:cursor-pointer' onClick={() => setShowReplies(true)}>
-              Xem tất cả {c.replies} phản hồi
+              Xem tất cả {c.repliesCount} phản hồi
             </button>
           )}
         </div>

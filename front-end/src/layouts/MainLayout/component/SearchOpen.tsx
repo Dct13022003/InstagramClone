@@ -3,20 +3,16 @@ import { Skeleton } from '../../../components/ui/skeleton'
 import { Avatar, AvatarFallback, AvatarImage } from '../../../components/ui/avatar'
 import { NavLink } from 'react-router-dom'
 import { useSearch } from '../../../hooks/useSearch'
-import { useSearchContext } from '../SearchContext'
+import { usePanelContext } from '../PanelContext'
 import { useSidebar } from '../../../components/ui/sidebar'
 
-type SearchOpenProps = {
-  isChatPage?: boolean
-}
-
-export default function SearchOpen(isChatPage: SearchOpenProps) {
+export default function SearchOpen() {
   const inputRef = useRef<HTMLInputElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const { open } = useSidebar()
-  const { searchOpen } = useSearchContext()
+  const { searchOpen } = usePanelContext()
   const { handleChange, searchUsersQuery, searchHistoryQuery, saveHistory } = useSearch()
-  const { setSearchOpen } = useSearchContext()
+  const { setSearchOpen } = usePanelContext()
 
   useEffect(() => {
     if (searchOpen) {

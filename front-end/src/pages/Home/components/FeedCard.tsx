@@ -5,20 +5,21 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createComment, likePost, unlikePost } from '../../../apis/post.api'
 import { PostDetail } from '../../../types/post.type'
 import { formatInstagramTime } from '../../../utils/time'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { followUser } from '../../../apis/follow.api'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import Caption from '../../../components/Caption'
 import { Comment } from '../../../types/comment.type'
 import { AppContext } from '../../../context/app.context'
 import { User } from '../../../types/user.type'
 import { SecondActionPost } from '../../../components/SecondActionPost'
 import { motion } from 'framer-motion'
+import { useFollowUser } from '../../../hooks/useFollowUser'
 
 type FeedCardProps = {
   feed: PostDetail
   type?: 'follow' | 'random'
+  index: number
 }
-export default function FeedCard({ feed, type }: FeedCardProps) {
+export default function FeedCard({ feed, type, index }: FeedCardProps) {
   const { profile } = useContext(AppContext)
   const [content, setContent] = useState('')
   const emojiRef = useRef<HTMLDivElement | null>(null)
@@ -62,10 +63,7 @@ export default function FeedCard({ feed, type }: FeedCardProps) {
     }
   })
 
-  const { mutate: mutateFollow } = useMutation({
-    mutationFn: followUser
-  })
-
+  const { mutate: mutateFollow } = useFollowUser()
   const likePostMutation = useMutation({
     mutationFn: (postId: string) => likePost(postId),
     onMutate: async (postId: string) => {
@@ -214,7 +212,7 @@ export default function FeedCard({ feed, type }: FeedCardProps) {
       <div className='flex flex-col'>
         <div className='flex items-center gap-3 px-3 '>
           <Avatar className='my-6'>
-            <AvatarImage className='object-cover w-10 h-10 ' src={feed.author?.profilePicture} />
+            <AvatarImage className='object-cover w-10 h-10 ' src={feed.author?.profilePicture} loading='lazy' />
             <AvatarFallback />
           </Avatar>
           <div className='flex items-center justify-between flex-1'>
@@ -247,7 +245,11 @@ export default function FeedCard({ feed, type }: FeedCardProps) {
 
         {/* Video / Hình ảnh */}
         <div className='bg-black rounded-sm overflow-hidden border-t border-b border-r border-gray-800'>
-          <img src={feed.images[0]} loading='lazy' className='w-full h-auto' />
+          {index === 0 ? (
+            <img src={feed.images[0]} fetchPriority='high' className='w-full h-auto aspect-square' />
+          ) : (
+            <img src={feed.images[0]} loading='lazy' className='w-full h-auto aspect-square' />
+          )}
         </div>
 
         <div className='px-2'>
@@ -296,7 +298,7 @@ export default function FeedCard({ feed, type }: FeedCardProps) {
                 <p className='font-semibold text-base text-center'>{feed.likesCount}</p>
               </div>
               <div className='flex items-center gap-2'>
-                <button onClick={() => handleOpenPost(feed.author.username as string, feed._id)}>
+                <Link to={`${feed?.author?.username}/p/${feed._id}`} state={{ backgroundLocation: location }}>
                   <motion.div
                     whileHover={{ scale: 1.05, cursor: 'pointer' }}
                     whileTap={{ scale: 0.85 }}
@@ -311,7 +313,8 @@ export default function FeedCard({ feed, type }: FeedCardProps) {
                   >
                     <MessageCircleIcon className=' w-6 h-6 font-semibold' />
                   </motion.div>
-                </button>
+                </Link>
+
                 <p className='font-semibold text-base text-center'>{feed.commentsCount}</p>
               </div>
             </div>
@@ -325,50 +328,6 @@ export default function FeedCard({ feed, type }: FeedCardProps) {
             </NavLink>
             <Caption text={feed.caption} />
           </div>
-          {/* <div className='text-gray-500'>Xem tất cả {feed.commentsCount} bình luận</div>
-          {localComments.length > 0 &&
-            localComments.map((c) => (
-              <div className='my-1.5'>
-                <NavLink to={`/${c.author.username}`}>
-                  <span className='font-semibold'>{profile?.username} </span>
-                </NavLink>
-                <span>{c.text} </span>
-              </div>
-            ))}
-          <div className='flex items-center w-full '>
-            <div className=' border-gray-200 relative flex-1 '>
-              <form onSubmit={handleSubmit} id={feed._id} className='flex flex-1 gap-2'>
-                <textarea
-                  ref={textareaRef}
-                  onInput={handleInput}
-                  rows={1}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder='Bình luận...'
-                  className='flex-1 border-0 py-2 focus:outline-none text-base resize-none'
-                />
-                {content.trim() && (
-                  <button type='submit' className='ml-2 bg-white text-blue-600  text-l focus:outline-none'>
-                    Đăng
-                  </button>
-                )}
-              </form>
-            </div>
-
-            <button
-              ref={buttonRef}
-              type='button'
-              onClick={() => setShowEmojiPicker((prev) => !prev)}
-              className='ml-2 relative'
-            >
-              <SmileIcon className='w-4 h-4 text-gray-600 hover:text-gray-300' />
-            </button>
-            {showEmojiPicker && (
-              <div ref={emojiRef} className='absolute bottom-12 right-7 top-15 z-50 '>
-                <EmojiPicker onEmojiClick={handleEmojiClick} />
-              </div>
-            )}
-          </div> */}
         </div>
       </div>
     </article>

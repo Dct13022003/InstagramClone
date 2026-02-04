@@ -1,11 +1,13 @@
 import { followService } from '~/services/follow.services'
 import { TokenPayload } from '~/models/request/user.request'
 import { Request, Response } from 'express'
+import { sendRealtimeNotification } from '~/socket/notification'
 
 export const followController = async (req: Request, res: Response) => {
   const { user_id } = req.decode_authorization as TokenPayload
   const { user_id_follow } = req.params
   const result = await followService.follow(user_id, user_id_follow)
+  sendRealtimeNotification(user_id_follow)
   return res.json({ result })
 }
 

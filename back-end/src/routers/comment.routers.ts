@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import {
   createCommentController,
+  deleteCommentController,
   getCommentController,
   getCommentRepliesController,
   likeCommentController,
@@ -18,6 +19,14 @@ const commentsRouter = Router()
  * Body: {text: string, mentions: User[], post_id: string, parent_id: string}
  */
 commentsRouter.post('/:post_id', accessTokenValidator, postValidator, wrapAsync(createCommentController))
+/**
+ * Description. Delete comment
+ * Route: /:comment_id
+ * Method: DELETE
+ * Headers: {Authorization: Bearer <access_token>}
+ */
+commentsRouter.delete('/:comment_id', accessTokenValidator, wrapAsync(deleteCommentController))
+
 /**
  * Description. Get all comments in post
  * Route: /:post_id

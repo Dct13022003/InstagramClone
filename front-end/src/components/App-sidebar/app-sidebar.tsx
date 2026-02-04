@@ -17,7 +17,8 @@ import { Explore, Message } from '../Icons/Icons'
 import { usePostModalCreatePost } from '../../store/useCreatePostModal.store'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { AppContext } from '../../context/app.context'
-import { useSearchContext } from '../../layouts/MainLayout/SearchContext'
+import { usePanelContext } from '../../layouts/MainLayout/PanelContext'
+import { useNotificationStore } from '../../store/useNotificationStore'
 
 const items = [
   {
@@ -64,7 +65,9 @@ const items = [
   }
 ]
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { setSearchOpen } = useSearchContext()
+  const { setSearchOpen } = usePanelContext()
+  const { hasUnread } = useNotificationStore()
+  const { setNotificationOpen } = usePanelContext()
   const { setOpen } = useSidebar()
   const { profile } = useContext(AppContext)
   const { open: openModal } = usePostModalCreatePost()
@@ -72,6 +75,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const searchButtonRef = useRef<HTMLButtonElement>(null)
   const handleSearchClick = () => {
     setSearchOpen((prev) => {
+      const next = !prev
+      setOpen(!next)
+      return next
+    })
+  }
+  const handleNotifiClick = () => {
+    setNotificationOpen((prev) => {
       const next = !prev
       setOpen(!next)
       return next
@@ -113,18 +123,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarGroupLabel>
               {!isMobile &&
                 items.map((item) => (
-                  <SidebarMenuItem className='flex items-center h-12 p-1'>
-                    {item.title === 'Tìm kiếm' ? (
+                  <SidebarMenuItem key={item.title} className='flex items-center h-12 p-1'>
+                    {item.title === 'Tìm kiếm' || item.title === 'Thông báo' ? (
                       <SidebarMenuButton
                         ref={searchButtonRef}
                         tooltip={item.title}
                         className='w-full  hover:cursor-pointer '
                         asChild
                         size={'lg'}
-                        onClick={handleSearchClick}
+                        onClick={item.title === 'Tìm kiếm' ? handleSearchClick : handleNotifiClick}
                       >
                         <button type='button'>
-                          {item.icon && <item.icon className='!w-7 !h-7' />}
+                          {item.title === 'Thông báo' ? (
+                            <div className='relative'>
+                              {item.icon && <item.icon className='!w-7 !h-7' />}
+                              {hasUnread && (
+                                <span className='absolute border-white border-2 box-content top-0 -right-1 h-2 w-2 rounded-full bg-red-500' />
+                              )}
+                            </div>
+                          ) : (
+                            item.icon && <item.icon className='!w-7 !h-7' />
+                          )}
+
                           <span className={`ml-3 text-base truncate ${isMobile ? 'hidden' : ''}`}>{item.title}</span>
                         </button>
                       </SidebarMenuButton>
@@ -150,26 +170,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuItem>
                 ))}
               {isMobile &&
-                items.map((item) => (
-                  <>
-                    {item.title !== 'Tìm kiếm' && item.title !== 'Thông báo' && (
-                      <SidebarMenuItem className='flex items-center h-12 justify-center'>
-                        <SidebarMenuButton
-                          tooltip={item.title}
-                          className='w-full h-10 group-data-[collapsible=icon]:size-12! justify-center'
-                          asChild
-                          onClick={() => {
-                            if (item.title === 'Tạo') {
-                              openModal()
-                            }
-                          }}
-                        >
-                          <NavLink to={item.url}>{item.icon && <item.icon className='!w-6 !h-6' />}</NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )}
-                  </>
-                ))}
+                items.map((item) =>
+                  item.title !== 'Tìm kiếm' && item.title !== 'Thông báo' ? (
+                    <SidebarMenuItem key={item.title} className='flex items-center h-12 justify-center'>
+                      <SidebarMenuButton
+                        tooltip={item.title}
+                        className='w-full h-10 group-data-[collapsible=icon]:size-12! justify-center'
+                        asChild
+                        onClick={() => {
+                          if (item.title === 'Tạo') {
+                            openModal()
+                          }
+                        }}
+                      >
+                        <NavLink to={item.url}>{item.icon && <item.icon className='!w-6 !h-6' />}</NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ) : null
+                )}
               <SidebarMenuItem className='flex-1 h-12 flex items-center'>
                 <SidebarMenuButton
                   className={`w-full h-10 group-data-[collapsible=icon]:size-12!`}
